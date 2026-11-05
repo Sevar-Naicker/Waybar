@@ -20,6 +20,12 @@ Floating dark-wood pills · a Quickshell dynamic island · maple-red highlights 
 
 <img src="screenshots/bar.png" alt="The bar" width="100%">
 
+<br><br>
+
+<img src="screenshots/island-demo.gif" alt="The dynamic island switching between music, clock, volume, stats, downloads and sync" width="760">
+
+<sub>The dynamic island: drag or scroll to switch sections, click to open a card</sub>
+
 </div>
 
 <br>
@@ -37,38 +43,45 @@ Floating dark-wood pills · a Quickshell dynamic island · maple-red highlights 
   </tr>
 </table>
 
-<table>
-  <tr>
-    <th align="center">Dynamic island <sub>(collapsed)</sub></th>
-    <th align="center">Clock card <sub>(click the island)</sub></th>
-    <th align="center">Stats card</th>
-  </tr>
-  <tr>
-    <td align="center"><img src="screenshots/island-pill.png" alt="Dynamic island showing CPU and temperatures" width="260"></td>
-    <td align="center"><img src="screenshots/island-clock.png" alt="Island expanded into a clock card" width="330"></td>
-    <td align="center"><img src="screenshots/island-stats.png" alt="Island expanded into a stats card" width="290"></td>
-  </tr>
-</table>
+### Dynamic island cards
 
 <table>
   <tr>
-    <th align="center">Per-core CPU <sub>(hover CPU)</sub></th>
+    <th align="center">Music</th>
+    <th align="center">Volume</th>
+    <th align="center">Stats</th>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/cpu-tooltip.png" alt="CPU tooltip" width="260"></td>
+    <td align="center"><img src="screenshots/island-music.png" alt="Music card with album art, visualiser and controls" width="290"></td>
+    <td align="center"><img src="screenshots/island-volume.png" alt="Volume card with slider and output devices" width="260"></td>
+    <td align="center"><img src="screenshots/island-stats.png" alt="Stats card with CPU, GPU and RAM bars" width="270"></td>
+  </tr>
+  <tr>
+    <th align="center">Downloads</th>
+    <th align="center">Nextcloud sync</th>
+    <th align="center">Pop-up <sub>(copied image)</sub></th>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/island-downloads.png" alt="Downloads card with recent files" width="290"></td>
+    <td align="center"><img src="screenshots/island-sync.png" alt="Sync card showing Nextcloud is up to date" width="260"></td>
+    <td align="center"><img src="screenshots/island-popup.png" alt="Pop-up for a copied image" width="260"></td>
   </tr>
 </table>
 
+### Waybar tooltips
+
 <table>
   <tr>
+    <th align="center">Per-core CPU</th>
     <th align="center">Temperature</th>
     <th align="center">RAM</th>
     <th align="center">Volume output</th>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/temp-tooltip.png" alt="Temperature tooltip" width="260"></td>
-    <td align="center"><img src="screenshots/ram-tooltip.png" alt="RAM tooltip" width="260"></td>
-    <td align="center"><img src="screenshots/volume-tooltip.png" alt="Volume tooltip" width="260"></td>
+    <td align="center"><img src="screenshots/cpu-tooltip.png" alt="CPU tooltip" width="200"></td>
+    <td align="center"><img src="screenshots/temp-tooltip.png" alt="Temperature tooltip" width="200"></td>
+    <td align="center"><img src="screenshots/ram-tooltip.png" alt="RAM tooltip" width="200"></td>
+    <td align="center"><img src="screenshots/volume-tooltip.png" alt="Volume tooltip" width="200"></td>
   </tr>
 </table>
 

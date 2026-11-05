@@ -769,7 +769,7 @@ ShellRoot
 
                 // Collapsed: never narrower than 130px. Expanded: the section's card size
                 // Pop-up first, then the open card, then the collapsed pill
-                width: islandWindow.popupActive ? 320 : (islandWindow.expanded ? expandedSize[0] : Math.max(130, collapsedContentWidth + 48))
+                width: islandWindow.popupActive ? 350 : (islandWindow.expanded ? expandedSize[0] : Math.max(130, collapsedContentWidth + 48))
                 height: islandWindow.popupActive ? 58 : (islandWindow.expanded ? expandedSize[1] : 26)
                 radius: islandWindow.popupActive ? 20 : (islandWindow.expanded ? 22 : 13)
                 clip: true
