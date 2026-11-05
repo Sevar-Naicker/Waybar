@@ -1,0 +1,88 @@
+/**
+ * Shrine App Launcher - Power Menu Match Edition
+ */
+
+configuration {
+    show-icons:         false;
+    display-drun:       " "; 
+    drun-display-format: "{name}";
+}
+
+window {
+    width:            600px;
+    /* #2A1D11 plus 'E6' for that 90% see-through brown */
+    background-color: #2A1D11E6; 
+    border:           2px;
+    border-color:     #87CEEB;
+    border-radius:    15px;
+}
+
+mainbox {
+    background-color: transparent;
+    children:         [ "dummy", "inputbar", "listview" ];
+}
+
+/* The Shrine Header */
+dummy {
+    expand:           false;
+    padding:          100px;
+    /* Header image is set by launcher.sh / power-menu.sh */
+}
+
+/* The Search Bar - Darker to ensure text visibility */
+inputbar {
+    enabled:          true;
+    margin:           10px 25px;
+    padding:          10px;
+    border-radius:    10px;
+    background-color: #1A120B; /* Solid dark brown for the search box */
+    children:         [ "prompt", "entry" ];
+}
+
+prompt {
+    text-color:       #87CEEB;
+    background-color: transparent;
+    margin:           0px 10px 0px 5px;
+}
+
+entry {
+    text-color:       #ffffff;
+    background-color: transparent;
+    placeholder:      "Search apps...";
+    placeholder-color: #ffffff30;
+}
+
+/* The App List - Matches your Power Menu spacing */
+listview {
+    enabled:          true;
+    columns:          1;
+    lines:            8;
+    cycle:            true;
+    dynamic:          true;
+    scrollbar:        false;
+    layout:           vertical;
+    padding:          10px 25px 20px 25px;
+    background-color: transparent; /* This ensures no white-on-white! */
+}
+
+element {
+    padding:          12px;
+    margin:           2px 0px;
+    border-radius:    10px;
+    background-color: transparent;
+}
+
+element-text {
+    text-color:       #ffffff;
+    background-color: transparent;
+    vertical-align:   0.5;
+}
+
+/* The Maple Red highlight when you hover/select */
+element selected {
+    background-color: #D3432BFA;
+}
+
+element-text selected {
+    text-color:       #ffffff;
+}

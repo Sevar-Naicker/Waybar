@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Waybar
+Comment=Shrine Waybar setup
+Exec=waybar
+Icon=waybar
+Terminal=false
+X-KDE-autostart-phase=2

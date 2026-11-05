@@ -1,0 +1,58 @@
+/**
+ * Shrine Power Menu - Autumn Glass Edition
+ */
+
+configuration {
+    show-icons: false;
+}
+
+window {
+    width:            400px;
+    /* #2A1D11 (Shrine Brown) + E6 (90% Opacity) */
+    background-color: #2A1D11E6; 
+    border:           2px;
+    border-color:     #87CEEB;
+    border-radius:    15px;
+}
+
+mainbox {
+    background-color: transparent;
+    children:         [ "dummy", "listview" ];
+}
+
+/* The dummy widget holds the photo but cannot accept text! */
+dummy {
+    padding:          100px;
+    /* Header image is set by launcher.sh / power-menu.sh */
+}
+
+listview {
+    enabled:          true;
+    lines:            4;
+    columns:          1;
+    fixed-height:     true;
+    padding:          10px;
+    background-color: transparent;
+}
+
+element {
+    padding:          12px;
+    margin:           4px;
+    border-radius:    10px;
+    background-color: transparent;
+}
+
+element-text {
+    text-color:       #ffffff;
+    background-color: transparent;
+    vertical-align:   0.5;
+}
+
+/* Red-Orange Maple Highlight (95% Opacity) */
+element selected {
+    background-color: #D3432BFA; 
+}
+
+element-text selected {
+    text-color:       #ffffff;
+}
