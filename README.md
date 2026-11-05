@@ -98,7 +98,7 @@ fc-cache -f
 Keep it somewhere permanent, because your configs will point into this folder:
 
 ```bash
-git clone https://github.com/Sevar-Naicker/shrine-waybar.git ~/shrine-waybar
+git clone https://github.com/Sevar-Naicker/Waybar.git ~/shrine-waybar
 cd ~/shrine-waybar
 ```
 
