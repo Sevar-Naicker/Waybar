@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Dynamic Island
+Comment=Shrine Waybar dynamic island (Quickshell)
+Exec=qs
+Icon=preferences-desktop
+Terminal=false
+X-KDE-autostart-phase=2

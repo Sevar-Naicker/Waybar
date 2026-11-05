@@ -4,7 +4,7 @@
 
 **A warm, autumn-shrine Waybar + rofi setup for KDE Plasma on Bazzite**
 
-Floating dark-wood pills · maple-red highlights · live audio visualiser · themed menus
+Floating dark-wood pills · a Quickshell dynamic island · maple-red highlights · themed menus
 
 ![KDE Plasma](https://img.shields.io/badge/KDE_Plasma-Wayland-1D99F3?style=for-the-badge&logo=kde&logoColor=white)
 ![Bazzite](https://img.shields.io/badge/Bazzite-Fedora_Atomic-8A2BE2?style=for-the-badge&logo=fedora&logoColor=white)
@@ -39,11 +39,22 @@ Floating dark-wood pills · maple-red highlights · live audio visualiser · the
 
 <table>
   <tr>
-    <th align="center">Year calendar <sub>(hover the clock)</sub></th>
+    <th align="center">Dynamic island <sub>(collapsed)</sub></th>
+    <th align="center">Clock card <sub>(click the island)</sub></th>
+    <th align="center">Stats card</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/island-pill.png" alt="Dynamic island showing CPU and temperatures" width="260"></td>
+    <td align="center"><img src="screenshots/island-clock.png" alt="Island expanded into a clock card" width="330"></td>
+    <td align="center"><img src="screenshots/island-stats.png" alt="Island expanded into a stats card" width="290"></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
     <th align="center">Per-core CPU <sub>(hover CPU)</sub></th>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/calendar.png" alt="Calendar tooltip" width="520"></td>
     <td align="center"><img src="screenshots/cpu-tooltip.png" alt="CPU tooltip" width="260"></td>
   </tr>
 </table>
@@ -67,10 +78,32 @@ Floating dark-wood pills · maple-red highlights · live audio visualiser · the
 |:-:|---|---|
 | 🔍 | **App launcher** | rofi menu with a shrine header image and search |
 | 🔌 | **Power menu** | Shutdown, restart, sleep and logout in a matching theme |
-| 🎵 | **Now playing + visualiser** | Current track from any player, joined to a live cava bar. Click to play/pause, scroll to skip. Hides when nothing's playing |
-| 🗓 | **Year calendar** | Hover the clock for the full year. Scroll to change month, right-click to switch view |
+| 🏝 | **Dynamic island** | Replaces the centre of the bar. Clock, music with a cava visualiser, volume, stats, downloads and Nextcloud sync, plus pop-ups for screenshots, downloads and finished commands. See [Dynamic island](#-dynamic-island) |
 | 📊 | **System stats** | Temperature, CPU, RAM and volume. Click temp/RAM for btop, volume for pavucontrol |
 | ⛩ | **Quick launch** | Dolphin, Bazaar and Brave, one click each |
+
+## ✦ Dynamic island
+
+The centre of the bar is a [Quickshell](https://quickshell.org) island that matches the pills around it. Drag sideways or scroll on it to switch sections, and click to open a card.
+
+| Section | Collapsed | Card |
+|---|---|---|
+| Clock | Time, date on hover | Large time and full date |
+| Music | Album art, title, visualiser. Click the art to pause | Art, artist, seekable progress bar, controls |
+| Volume | Level and percentage | Slider, mute, one-click output switching. Scroll to adjust |
+| Stats | CPU %, CPU and GPU temperature | CPU, GPU and RAM bars, Open System Monitor |
+| Downloads | Download speed | In-progress files, 5 recent files, Open in Dolphin |
+| Sync | Nextcloud state | Nextcloud's status, open the client or folder |
+
+Music only shows while a player is open, and Sync only while the Nextcloud client is running.
+
+It also pops out briefly for a new screenshot, a copied image, a finished download, a Nextcloud error, a volume change, or a command run with `island`:
+
+```bash
+island rpm-ostree upgrade   # pops a tick or a cross, with how long it took
+```
+
+Everything lives in `config/quickshell/`. Its [README](config/quickshell/README.md) covers each file and fixes for common problems.
 
 ## ✦ Palette
 
@@ -88,25 +121,30 @@ Floating dark-wood pills · maple-red highlights · live audio visualiser · the
 | Program | Used for |
 |---|---|
 | `waybar` | The bar itself |
+| `quickshell` | The dynamic island (from a COPR, see install step 1) |
+| `wl-clipboard` | Copied-image pop-ups on the island |
 | `rofi` | App launcher and power menu |
-| `cava` | Audio visualiser |
-| `playerctl` | Now-playing info and media controls |
+| `cava` | The island's audio visualiser |
+| `playerctl` | Optional: only the old Waybar now-playing module uses it |
 | `kitty` + `btop` | Stats window when clicking temp/RAM |
 | `pavucontrol` | Volume mixer when clicking volume |
-| `python3` | Now-playing script (already on Bazzite) |
+| `python3` | The island's downloads watcher (already on Bazzite) |
 | [JetBrainsMono Nerd Font](https://www.nerdfonts.com/font-downloads) | All the icons |
 
 > [!NOTE]
-> The quick-launch buttons open Dolphin (comes with KDE), Bazaar (comes with Bazzite), [Brave](https://flathub.org/apps/com.brave.Browser) and [Evolution](https://flathub.org/apps/org.gnome.Evolution) for the calendar. Swap any of them for your own apps (see [Customising](#-customising)).
+> The quick-launch buttons open Dolphin (comes with KDE), Bazaar (comes with Bazzite), [Brave](https://flathub.org/apps/com.brave.Browser) and [Evolution](https://flathub.org/apps/org.gnome.Evolution) for the calendar (only if you add the Waybar `clock` module back). Swap any of them for your own apps (see [Customising](#-customising)).
 
 ## ✦ Install
 
 ### 1. Install the programs
 
-Bazzite is an immutable (atomic) system, so packages are layered with `rpm-ostree`, not `dnf`:
+Bazzite is an immutable (atomic) system, so packages are layered with `rpm-ostree`, not `dnf`. Quickshell isn't in the normal Fedora repos, so add its COPR first:
 
 ```bash
-rpm-ostree install waybar rofi cava playerctl kitty btop pavucontrol
+sudo curl -Lo /etc/yum.repos.d/quickshell.repo \
+  "https://copr.fedorainfracloud.org/coprs/errornointernet/quickshell/repo/fedora-$(rpm -E %fedora)/errornointernet-quickshell-fedora-$(rpm -E %fedora).repo"
+
+rpm-ostree install waybar rofi cava playerctl kitty btop pavucontrol quickshell wl-clipboard
 systemctl reboot
 ```
 
@@ -115,7 +153,8 @@ If it complains a package is already installed, remove that one from the list an
 Optional Flatpak apps for the buttons:
 
 ```bash
-flatpak install flathub com.brave.Browser org.gnome.Evolution
+flatpak install flathub com.brave.Browser
+flatpak install flathub org.gnome.Evolution   # Only for the optional Waybar clock module
 ```
 
 ### 2. Install the font
@@ -146,9 +185,10 @@ cd ~/shrine-waybar
 The installer:
 
 1. Checks for missing programs and the font, and prints the command to install them
-2. Moves any existing `~/.config/waybar`, `~/.config/rofi` and Waybar autostart entry into `~/.config-backup/`
+2. Moves any existing `~/.config/waybar`, `~/.config/rofi`, `~/.config/quickshell` and autostart entries into `~/.config-backup/`
 3. Symlinks the repo's configs into `~/.config`
-4. Restarts Waybar
+4. Adds the `island` command to `~/.bashrc`
+5. Restarts Waybar, then the dynamic island
 
 > [!TIP]
 > Because the configs are symlinked, any edit in `~/shrine-waybar/config/` takes effect live, and you can commit it straight to git.
@@ -166,16 +206,21 @@ Otherwise you'll have two bars. Right-click the KDE panel and choose **Show Pane
 |---|---|
 | Quick-launch apps | `on-click` in the `custom/dolphin`, `custom/torii` and `custom/brave` blocks of `config/waybar/config.jsonc`. For a Flatpak, use `flatpak run <app id>` |
 | Terminal for stats | `kitty` in the `temperature` and `memory` blocks |
-| Calendar app | `on-click` in the `clock` block |
+| Calendar app | `on-click` in the `clock` block (only used if you put `clock` back in `modules-center`) |
 | Bar colours | `config/waybar/style.css` |
 | Menu colours | `config/rofi/app_launcher.rasi` and `config/rofi/power.rasi` |
 | Menu header image | Replace `config/rofi/shrine_header.png` with any PNG |
+| Island sections and their order | `sectionOrder` in `config/quickshell/shell.qml` |
+| Island colours | The hex colours in `config/quickshell/shell.qml` (same palette as above) |
+| Screenshots folder the island watches | `ScreenshotsFolder` at the top of `config/quickshell/downloads.py` |
 
 After editing, reload the bar:
 
 ```bash
 pkill waybar; setsid -f waybar
 ```
+
+The island reloads by itself whenever `shell.qml` is saved.
 
 <details>
 <summary><b>📁 Repo layout</b></summary>
@@ -187,16 +232,26 @@ shrine-waybar/
 │   ├── waybar/
 │   │   ├── config.jsonc        # Bar layout and modules
 │   │   ├── style.css           # Bar colours and pill styling
-│   │   ├── mediaplayer.py      # Now-playing module (playerctl)
-│   │   └── cava.sh             # Audio visualiser module
+│   │   ├── mediaplayer.py      # Old now-playing module (not on the bar now, kept as an option)
+│   │   └── cava.sh             # Old visualiser module (not on the bar now, kept as an option)
 │   ├── rofi/
 │   │   ├── launcher.sh         # Opens the app launcher
 │   │   ├── power-menu.sh       # Opens the power menu
 │   │   ├── app_launcher.rasi   # Launcher theme
 │   │   ├── power.rasi          # Power menu theme
 │   │   └── shrine_header.png   # Header image for both menus
+│   ├── quickshell/
+│   │   ├── shell.qml           # The dynamic island
+│   │   ├── cava.conf           # Island visualiser settings
+│   │   ├── stats.sh            # CPU, GPU and RAM readings
+│   │   ├── downloads.py        # Downloads, screenshots and download speed
+│   │   ├── clipboard.sh        # Watches for copied images
+│   │   ├── clipboard-handler.sh
+│   │   ├── island-command.sh   # The "island" terminal command
+│   │   └── README.md           # Island details and troubleshooting
 │   └── autostart/
-│       └── waybar.desktop      # Starts Waybar when you log into KDE
+│       ├── waybar.desktop      # Starts Waybar when you log into KDE
+│       └── dynamic-island.desktop  # Starts the island
 └── screenshots/
 ```
 
@@ -206,9 +261,13 @@ shrine-waybar/
 <summary><b>🛠 Troubleshooting</b></summary>
 
 - **Icons show as boxes:** the Nerd Font isn't installed or the font cache is stale. Redo step 2, then log out and back in.
-- **Visualiser or now-playing missing:** these hide when nothing is playing. Play something. If they still don't show, check that `cava` and `playerctl` are installed.
+- **Music section missing from the island:** it only appears while a media player is open. Play something.
+- **Island visualiser bars stay flat:** check that `cava` runs on its own in a terminal.
 - **Two bars on login:** another autostart entry is also starting Waybar. Check `~/.config/autostart/`.
 - **Waybar doesn't start on login:** check that `~/.config/autostart/waybar.desktop` exists, or add Waybar in **System Settings → Autostart**.
+- **The island shows but can't be clicked:** Waybar is sitting on top of it. Check that `config/waybar/config.jsonc` has `"layer": "bottom"`, then reload Waybar.
+- **The island doesn't appear:** run `qs log` to see what it printed, or start it by hand with `setsid -f qs`.
+- **Reloading Waybar closes an app:** that app was opened before the `setsid -f` launch commands were added. Reopen it and it won't happen again.
 - **Logout takes a few seconds:** that's KDE closing your apps and saving your session, which is normal.
 
 </details>
@@ -219,9 +278,12 @@ shrine-waybar/
 Remove the symlinks and restore your backup:
 
 ```bash
-rm ~/.config/waybar ~/.config/rofi ~/.config/autostart/waybar.desktop
+rm ~/.config/waybar ~/.config/rofi ~/.config/quickshell
+rm ~/.config/autostart/waybar.desktop ~/.config/autostart/dynamic-island.desktop
 cp -r ~/.config-backup/shrine-waybar-<date>/* ~/.config/   # Only if you had configs before
 ```
+
+Then delete the `island-command.sh` line the installer added to `~/.bashrc`.
 
 </details>
 

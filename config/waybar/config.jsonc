@@ -1,7 +1,8 @@
 // This file contains the Waybar layout and module settings for the Shrine bar
 {
     // Section: Bar placement
-    "layer": "top",
+    // Bottom layer keeps the dynamic island above the bar, even after a Waybar reload
+    "layer": "bottom",
     "position": "top",
     "height": 34,
     "margin-top": 5,
@@ -11,31 +12,32 @@
 
     // Section: Module order
     "modules-left": ["custom/launcher", "custom/dolphin", "custom/torii", "custom/brave", "tray"],
-    "modules-center": ["custom/media", "custom/cava", "clock"],
+    // The centre is the Quickshell dynamic island (config/quickshell)
+    "modules-center": [],
     "modules-right": ["temperature", "cpu", "memory", "pulseaudio", "custom/power"],
 
     // Section: App shortcuts
     "custom/launcher": { 
         "format": "󰀻", 
-        "on-click": "bash ~/.config/rofi/launcher.sh", 
+        "on-click": "setsid -f bash ~/.config/rofi/launcher.sh", 
         "tooltip": false 
     },
 
     "custom/dolphin": { 
         "format": "", 
-        "on-click": "dolphin", 
+        "on-click": "setsid -f dolphin", 
         "tooltip": false 
     },
 
     "custom/torii": { 
         "format": "⛩\ufe0e", 
-        "on-click": "gtk-launch io.github.kolunmi.Bazaar", 
+        "on-click": "setsid -f gtk-launch io.github.kolunmi.Bazaar", 
         "tooltip": false 
     },
 
     "custom/brave": { 
         "format": "󰖟", 
-        "on-click": "flatpak run com.brave.Browser", 
+        "on-click": "setsid -f flatpak run com.brave.Browser", 
         "tooltip": false 
     },
 
@@ -96,7 +98,7 @@
     "temperature": {
         "critical-threshold": 80,
         "format": " {temperatureC}°C",
-        "on-click": "kitty --title 'Live Stats' btop"
+        "on-click": "setsid -f kitty --title 'Live Stats' btop"
     },
 
     "cpu": { 
@@ -107,18 +109,18 @@
     "memory": { 
         "interval": 5, 
         "format": " {used:0.1f}G",
-        "on-click": "kitty --title 'Memory Stats' btop"
+        "on-click": "setsid -f kitty --title 'Memory Stats' btop"
     },
 
     "pulseaudio": { 
         "format": "  {volume}%", 
-        "on-click": "pavucontrol" 
+        "on-click": "setsid -f pavucontrol" 
     },
 
     // Section: Power
     "custom/power": { 
         "format": "⏻", 
-        "on-click": "bash ~/.config/rofi/power-menu.sh", 
+        "on-click": "setsid -f bash ~/.config/rofi/power-menu.sh", 
         "tooltip": false 
     }
 }
