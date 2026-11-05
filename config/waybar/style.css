@@ -12,9 +12,10 @@ window#waybar {
 
 /* THE FLOATING TEMPLE PILLS */
 #clock,
-#temperature,
-#cpu,
-#memory,
+#idle_inhibitor,
+#custom-ytmusic,
+#custom-tasks,
+#custom-nightlight,
 #pulseaudio,
 #tray,
 #custom-launcher,
@@ -41,9 +42,10 @@ window#waybar {
 
 /* UNIVERSAL HOVER EFFECT */
 #clock:hover,
-#temperature:hover,
-#cpu:hover,
-#memory:hover,
+#idle_inhibitor:hover,
+#custom-ytmusic:hover,
+#custom-tasks:hover,
+#custom-nightlight:hover,
 #pulseaudio:hover,
 #tray:hover,
 #custom-launcher:hover,
@@ -108,4 +110,36 @@ tooltip label {
 #calendar th {
     color: #CB3F27;                    /* Maple Red Month Header */
     font-weight: bold;
+}
+
+/* KEEP AWAKE: maple red while the screen is kept on */
+#idle_inhibitor.activated {
+    color: #CB3F27;
+}
+
+/* NIGHT LIGHT: amber while the screen is warmed */
+#custom-nightlight.on {
+    color: #E18A42;
+}
+
+/* TODAY'S TASK: light wood when everything's done */
+#custom-tasks.empty {
+    color: #E5D3B3;
+}
+
+/* ICON CENTRING: some Nerd Font icons sit off-centre, so these pills get uneven padding to balance them */
+#custom-dolphin {
+    padding: 0 14px 0 10px;
+}
+
+#custom-ytmusic {
+    padding: 0 11px 0 13px;
+}
+
+#custom-nightlight {
+    padding: 0 9px 0 15px;
+}
+
+#custom-power {
+    padding: 0 14px 0 10px;
 }

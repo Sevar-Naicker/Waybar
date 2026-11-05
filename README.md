@@ -68,23 +68,6 @@ Floating dark-wood pills · a Quickshell dynamic island · maple-red highlights 
   </tr>
 </table>
 
-### Waybar tooltips
-
-<table>
-  <tr>
-    <th align="center">Per-core CPU</th>
-    <th align="center">Temperature</th>
-    <th align="center">RAM</th>
-    <th align="center">Volume output</th>
-  </tr>
-  <tr>
-    <td align="center"><img src="screenshots/cpu-tooltip.png" alt="CPU tooltip" width="200"></td>
-    <td align="center"><img src="screenshots/temp-tooltip.png" alt="Temperature tooltip" width="200"></td>
-    <td align="center"><img src="screenshots/ram-tooltip.png" alt="RAM tooltip" width="200"></td>
-    <td align="center"><img src="screenshots/volume-tooltip.png" alt="Volume tooltip" width="200"></td>
-  </tr>
-</table>
-
 ## ✦ Features
 
 | | Feature | What it does |
@@ -92,7 +75,10 @@ Floating dark-wood pills · a Quickshell dynamic island · maple-red highlights 
 | 🔍 | **App launcher** | rofi menu with a shrine header image and search |
 | 🔌 | **Power menu** | Shutdown, restart, sleep and logout in a matching theme |
 | 🏝 | **Dynamic island** | Replaces the centre of the bar. Clock, music with a cava visualiser, volume, stats, downloads and Nextcloud sync, plus pop-ups for screenshots, downloads and finished commands. See [Dynamic island](#-dynamic-island) |
-| 📊 | **System stats** | Temperature, CPU, RAM and volume. Click temp/RAM for btop, volume for pavucontrol |
+| ☐ | **Today's task** | Your unfinished tasks from `~/Nextcloud/Tasks.txt`, one at a time. Scroll to pick, click to tick it off, right-click to edit. Edit the list from your phone in the Nextcloud app |
+| 🎵 | **YouTube Music** | Opens YTMDesktop in one click |
+| 🌙 | **Night light** | Toggles KDE's warm screen mode. Glows amber whenever the screen is warmed |
+| ☕ | **Keep awake** | Click to stop the screen sleeping or locking. Turns maple red while on |
 | ⛩ | **Quick launch** | Dolphin, Bazaar and Brave, one click each |
 
 ## ✦ Dynamic island
@@ -107,10 +93,11 @@ The centre of the bar is a [Quickshell](https://quickshell.org) island that matc
 | Stats | CPU %, CPU and GPU temperature | CPU, GPU and RAM bars, Open System Monitor |
 | Downloads | Download speed | In-progress files, 5 recent files, Open in Dolphin |
 | Sync | Nextcloud state | Nextcloud's status, open the client or folder |
+| Updates | Restart or app-update count | System and Flatpak status, Update now, Restart |
 
-Music only shows while a player is open, and Sync only while the Nextcloud client is running.
+Music only shows while a player is open, Sync only while the Nextcloud client is running, and Updates only when something's waiting. CPU, GPU, RAM, temperatures and volume live in the island rather than on the bar.
 
-It also pops out briefly for a new screenshot, a copied image, a finished download, a Nextcloud error, a volume change, or a command run with `island`:
+It also pops out briefly for a new screenshot, a copied image, a finished download, new updates, a Nextcloud error, a volume change, or a command run with `island`:
 
 ```bash
 island rpm-ostree upgrade   # pops a tick or a cross, with how long it took
@@ -139,13 +126,12 @@ Everything lives in `config/quickshell/`. Its [README](config/quickshell/README.
 | `rofi` | App launcher and power menu |
 | `cava` | The island's audio visualiser |
 | `playerctl` | Optional: only the old Waybar now-playing module uses it |
-| `kitty` + `btop` | Stats window when clicking temp/RAM |
-| `pavucontrol` | Volume mixer when clicking volume |
-| `python3` | The island's downloads watcher (already on Bazzite) |
+| `kitty` | Terminal for the island's Update now button |
+| `python3` | The island's downloads watcher and the today's task pill (already on Bazzite) |
 | [JetBrainsMono Nerd Font](https://www.nerdfonts.com/font-downloads) | All the icons |
 
 > [!NOTE]
-> The quick-launch buttons open Dolphin (comes with KDE), Bazaar (comes with Bazzite), [Brave](https://flathub.org/apps/com.brave.Browser) and [Evolution](https://flathub.org/apps/org.gnome.Evolution) for the calendar (only if you add the Waybar `clock` module back). Swap any of them for your own apps (see [Customising](#-customising)).
+> The quick-launch buttons open Dolphin (comes with KDE), Bazaar (comes with Bazzite), [Brave](https://flathub.org/apps/com.brave.Browser), [YTMDesktop](https://flathub.org/apps/app.ytmdesktop.ytmdesktop) for the YouTube Music pill, and [Evolution](https://flathub.org/apps/org.gnome.Evolution) for the calendar (only if you add the Waybar `clock` module back). Swap any of them for your own apps (see [Customising](#-customising)).
 
 ## ✦ Install
 
@@ -157,7 +143,7 @@ Bazzite is an immutable (atomic) system, so packages are layered with `rpm-ostre
 sudo curl -Lo /etc/yum.repos.d/quickshell.repo \
   "https://copr.fedorainfracloud.org/coprs/errornointernet/quickshell/repo/fedora-$(rpm -E %fedora)/errornointernet-quickshell-fedora-$(rpm -E %fedora).repo"
 
-rpm-ostree install waybar rofi cava playerctl kitty btop pavucontrol quickshell wl-clipboard
+rpm-ostree install waybar rofi cava playerctl kitty quickshell wl-clipboard
 systemctl reboot
 ```
 
@@ -167,6 +153,7 @@ Optional Flatpak apps for the buttons:
 
 ```bash
 flatpak install flathub com.brave.Browser
+flatpak install flathub app.ytmdesktop.ytmdesktop   # YouTube Music pill
 flatpak install flathub org.gnome.Evolution   # Only for the optional Waybar clock module
 ```
 
@@ -218,7 +205,9 @@ Otherwise you'll have two bars. Right-click the KDE panel and choose **Show Pane
 | To change | Edit |
 |---|---|
 | Quick-launch apps | `on-click` in the `custom/dolphin`, `custom/torii` and `custom/brave` blocks of `config/waybar/config.jsonc`. For a Flatpak, use `flatpak run <app id>` |
-| Terminal for stats | `kitty` in the `temperature` and `memory` blocks |
+| Music app | `on-click` in the `custom/ytmusic` block. For another Flatpak, use `flatpak run <app id>` |
+| Task list location | `TasksFile` at the top of `config/waybar/tasks.py` (and the comment in the `custom/tasks` block) |
+| Terminal for updates | `kitty` in the `runUpdate` function of `config/quickshell/shell.qml` |
 | Calendar app | `on-click` in the `clock` block (only used if you put `clock` back in `modules-center`) |
 | Bar colours | `config/waybar/style.css` |
 | Menu colours | `config/rofi/app_launcher.rasi` and `config/rofi/power.rasi` |
@@ -245,6 +234,8 @@ shrine-waybar/
 │   ├── waybar/
 │   │   ├── config.jsonc        # Bar layout and modules
 │   │   ├── style.css           # Bar colours and pill styling
+│   │   ├── tasks.py            # Today's task pill (list lives in Nextcloud)
+│   │   ├── night-light.sh      # Night light pill and toggle
 │   │   ├── mediaplayer.py      # Old now-playing module (not on the bar now, kept as an option)
 │   │   └── cava.sh             # Old visualiser module (not on the bar now, kept as an option)
 │   ├── rofi/
@@ -257,6 +248,7 @@ shrine-waybar/
 │   │   ├── shell.qml           # The dynamic island
 │   │   ├── cava.conf           # Island visualiser settings
 │   │   ├── stats.sh            # CPU, GPU and RAM readings
+│   │   ├── updates.sh          # Waiting system and Flatpak updates
 │   │   ├── downloads.py        # Downloads, screenshots and download speed
 │   │   ├── clipboard.sh        # Watches for copied images
 │   │   ├── clipboard-handler.sh

@@ -16,13 +16,15 @@ Built for Bazzite (KDE Plasma, Wayland) and runs on every monitor.
 | Stats | CPU %, CPU and GPU temperature | CPU, GPU and RAM bars, Open System Monitor |
 | Downloads | Download speed, active count | In-progress downloads, 5 recent files, Open in Dolphin |
 | Sync | Nextcloud state | Nextcloud's status text, open client or folder |
+| Updates | Restart or app-update count | System and Flatpak status, Update now (in kitty), Restart |
 
-Music only appears while a media player is open, and Sync only while the Nextcloud client is running. The island returns to music (or the clock) after 10 seconds untouched.
+Music only appears while a media player is open, Sync only while the Nextcloud client is running, and Updates only when something's waiting. The island returns to music (or the clock) after 10 seconds untouched.
 
 **Pop-ups** — the island briefly pops out for:
 
 - A new screenshot or finished download (click to open, right-click to show in Dolphin)
 - A copied image (click to save it to Screenshots, right-click to open it)
+- New updates (click to open the updates card)
 - A Nextcloud sync error (click to open Nextcloud)
 - A finished terminal command run with `island` (tick or cross, with how long it took)
 - A volume change from the keyboard or another app
@@ -34,6 +36,7 @@ Music only appears while a media player is open, and Sync only while the Nextclo
 | `shell.qml` | The island itself |
 | `cava.conf` | Visualiser settings (12 bars, plain numbers out) |
 | `stats.sh` | Prints CPU, GPU and RAM readings every 2 seconds |
+| `updates.sh` | Checks for a downloaded system update and waiting Flatpak updates, at login and hourly |
 | `downloads.py` | Watches Downloads and Screenshots, measures download speed |
 | `clipboard.sh` | Watches the clipboard for copied images |
 | `clipboard-handler.sh` | Saves a copied image to a temporary folder |
@@ -75,6 +78,8 @@ Saving `shell.qml` reloads the island instantly, so edits show up without a rest
 
 **Visualiser bars stay flat** — make sure `cava` runs on its own in a terminal.
 
+**Updates never show** — run `bash ~/.config/quickshell/updates.sh 0`. It prints `yes`/`no` (system update downloaded) and the number of Flatpak updates. Bazzite downloads system updates by itself, so the island shows them once they're ready to apply on restart.
+
 **Stats show nothing for the GPU** — run `stats.sh`; a `-1` means that sensor wasn't found.
 
 **No Sync section** — the Nextcloud client isn't running, or its tray icon isn't showing.
@@ -85,4 +90,4 @@ Saving `shell.qml` reloads the island instantly, so edits show up without a rest
 
 ## Still to come
 
-- KDE Connect (calls, texts, phone battery, received files) once the Galaxy Z Fold 8 arrives
+- KDE Connect (calls, texts, phone battery, received files) once the Galaxy Z Fold 8 arrives, plus "Done" and "Next task" phone buttons for the Waybar task pill

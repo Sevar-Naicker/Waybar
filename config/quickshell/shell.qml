@@ -171,7 +171,71 @@ ShellRoot
         function commandDone(CommandText: string, ExitCode: int, Seconds: int): void
         {
             commandFinished(CommandText, ExitCode, Seconds);
+
+            // Check for updates again straight after an update finishes
+            if (CommandText.includes("update"))
+            {
+                updatesProcess.recheck();
+            }
         }
+    }
+
+    // Section: Updates source
+    // Reads "<staged yes/no> <flatpak count>" from updates.sh at login and then hourly
+    Process
+    {
+        id: updatesProcess
+
+        property bool systemStaged: false
+        property int flatpakCount: 0
+        property bool updatesWaiting: systemStaged || flatpakCount > 0
+
+        // Seconds before the first check; shortened when rechecking after an update
+        property int firstDelay: 30
+
+        // Fired when updates appear that weren't waiting before
+        signal updatesFound()
+
+        command: ["sh", "-c", "exec bash \"$HOME/.config/quickshell/updates.sh\" " + firstDelay]
+        running: true
+
+        // The recheck function restarts the feed so it checks again in a couple of seconds
+        function recheck()
+        {
+            firstDelay = 2;
+            running = false;
+            updatesRestartTimer.restart();
+        }
+
+        stdout: SplitParser
+        {
+            onRead: (Line) =>
+            {
+                const Parts = Line.trim().split(/\s+/);
+
+                if (Parts.length < 2)
+                {
+                    return;
+                }
+
+                const WasWaiting = updatesProcess.updatesWaiting;
+                updatesProcess.systemStaged = Parts[0] === "yes";
+                updatesProcess.flatpakCount = parseInt(Parts[1]) || 0;
+
+                if (!WasWaiting && updatesProcess.updatesWaiting)
+                {
+                    updatesProcess.updatesFound();
+                }
+            }
+        }
+    }
+
+    // Starts the updates feed again shortly after a recheck stops it
+    Timer
+    {
+        id: updatesRestartTimer
+        interval: 300
+        onTriggered: updatesProcess.running = true
     }
 
     // Section: Audio source
@@ -213,7 +277,7 @@ ShellRoot
 
             // Section: Island state
             property string currentSection: "clock"
-            property var sectionOrder: ["clock", "music", "vol", "stats", "dl", "sync"]
+            property var sectionOrder: ["clock", "music", "vol", "stats", "dl", "sync", "updates"]
             property bool expanded: false
 
             // Section: Pop-up state
@@ -483,6 +547,78 @@ ShellRoot
                 expanded = false;
             }
 
+            // Section: Updates state
+
+            // Pop up when updates appear; clicking opens the updates card
+            Connections
+            {
+                target: updatesProcess
+
+                function onUpdatesFound()
+                {
+                    islandWindow.showMessagePopup({
+                        "icon": updatesProcess.systemStaged ? "\uf01e" : "\uf0ed",
+                        "colour": "#E5D3B3",
+                        "title": updatesProcess.systemStaged ? "System update ready" : "Updates available",
+                        "subtitle": updatesProcess.systemStaged ? "Restart to apply · click for details" : islandWindow.flatpakLabel() + " · click for details",
+                        "action": "updates"
+                    });
+                }
+            }
+
+            // Fall back to the clock once everything's updated
+            Connections
+            {
+                target: updatesProcess
+
+                function onUpdatesWaitingChanged()
+                {
+                    if (!updatesProcess.updatesWaiting && islandWindow.currentSection === "updates")
+                    {
+                        islandWindow.currentSection = "clock";
+                    }
+                }
+            }
+
+            // The flatpakLabel function words the Flatpak count, e.g. "1 app update" or "3 app updates"
+            function flatpakLabel()
+            {
+                const Count = updatesProcess.flatpakCount;
+                return Count + (Count === 1 ? " app update" : " app updates");
+            }
+
+            // The updatesSummary function gives the short collapsed text for the updates section
+            function updatesSummary()
+            {
+                if (updatesProcess.systemStaged && updatesProcess.flatpakCount > 0)
+                {
+                    return "Restart · " + flatpakLabel();
+                }
+
+                if (updatesProcess.systemStaged)
+                {
+                    return "Restart to update";
+                }
+
+                return flatpakLabel();
+            }
+
+            // The runUpdate function opens kitty and runs the Bazzite update through the island ping
+            function runUpdate()
+            {
+                Quickshell.execDetached(["kitty", "--title", "Bazzite Update", "bash", "-ic",
+                                         "island ujust update; echo; read -rp 'Press Enter to close…'"]);
+                expanded = false;
+            }
+
+            // The promptRestart function opens KDE's own restart dialog, which asks before doing anything
+            function promptRestart()
+            {
+                Quickshell.execDetached(["gdbus", "call", "--session", "--dest", "org.kde.LogoutPrompt",
+                                         "--object-path", "/LogoutPrompt", "--method", "org.kde.LogoutPrompt.promptReboot"]);
+                expanded = false;
+            }
+
             // Section: Volume state
             property var audioSink: Pipewire.defaultAudioSink
             property real sinkVolume: audioSink && audioSink.audio ? audioSink.audio.volume : 0
@@ -673,6 +809,11 @@ ShellRoot
                     return syncItem !== null;
                 }
 
+                if (SectionName === "updates")
+                {
+                    return updatesProcess.updatesWaiting;
+                }
+
                 return true;
             }
 
@@ -733,6 +874,11 @@ ShellRoot
                         return syncRow.implicitWidth;
                     }
 
+                    if (islandWindow.currentSection === "updates")
+                    {
+                        return updatesRow.implicitWidth;
+                    }
+
                     return clockLabel.implicitWidth;
                 }
 
@@ -762,6 +908,11 @@ ShellRoot
                     if (islandWindow.currentSection === "sync")
                     {
                         return [320, syncCard.implicitHeight + 28];
+                    }
+
+                    if (islandWindow.currentSection === "updates")
+                    {
+                        return [320, updatesCard.implicitHeight + 28];
                     }
 
                     return [280, 96];
@@ -966,6 +1117,16 @@ ShellRoot
                             if (islandWindow.popupMessage.action === "nextcloud")
                             {
                                 islandWindow.openNextcloud();
+                            }
+
+                            // Updates pop-up opens the updates card
+                            if (islandWindow.popupMessage.action === "updates")
+                            {
+                                islandWindow.dismissPopup();
+                                islandWindow.currentSection = "updates";
+                                islandWindow.expanded = true;
+                                idleTimer.restart();
+                                return;
                             }
 
                             islandWindow.dismissPopup();
@@ -2339,6 +2500,152 @@ ShellRoot
                                             // The Nextcloud client's default local folder
                                             Quickshell.execDetached(["sh", "-c", "exec dolphin \"$HOME/Nextcloud\""]);
                                             islandWindow.expanded = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Section: Updates, collapsed
+                Row
+                {
+                    id: updatesRow
+
+                    anchors.centerIn: parent
+                    spacing: 8
+
+                    opacity: islandWindow.currentSection === "updates" && !islandWindow.expanded && !islandWindow.popupActive ? 1 : 0
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: 200 } }
+
+                    Text
+                    {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: updatesProcess.systemStaged ? "\uf01e" : "\uf0ed"
+                        color: "#E5D3B3"
+                        font.family: "JetBrainsMono Nerd Font"
+                        font.pixelSize: 13
+                    }
+
+                    Text
+                    {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: islandWindow.updatesSummary()
+                        color: "#ffffff"
+                        font.family: "JetBrainsMono Nerd Font"
+                        font.pixelSize: 13
+                    }
+                }
+
+                // Section: Updates, expanded
+                Column
+                {
+                    id: updatesCard
+
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.margins: 14
+                    spacing: 10
+
+                    opacity: islandWindow.currentSection === "updates" && islandWindow.expanded && !islandWindow.popupActive ? 1 : 0
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: 250 } }
+
+                    // One row each for the system and Flatpak apps
+                    Repeater
+                    {
+                        model: 2
+
+                        Item
+                        {
+                            required property int index
+
+                            width: updatesCard.width
+                            height: 18
+
+                            Text
+                            {
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: index === 0 ? "System" : "Apps"
+                                color: "#E5D3B3"
+                                font.family: "JetBrainsMono Nerd Font"
+                                font.pixelSize: 12
+                            }
+
+                            Text
+                            {
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                text:
+                                {
+                                    if (index === 0)
+                                    {
+                                        return updatesProcess.systemStaged ? "Downloaded · restart to apply" : "Up to date";
+                                    }
+
+                                    return updatesProcess.flatpakCount > 0 ? islandWindow.flatpakLabel() + " waiting" : "Up to date";
+                                }
+                                color: (index === 0 ? updatesProcess.systemStaged : updatesProcess.flatpakCount > 0) ? "#ffffff" : "#86979A"
+                                font.family: "JetBrainsMono Nerd Font"
+                                font.pixelSize: 12
+                            }
+                        }
+                    }
+
+                    // Update now, plus Restart when a system update is waiting
+                    Row
+                    {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        spacing: 8
+
+                        Repeater
+                        {
+                            model: updatesProcess.systemStaged
+                                   ? [{ "label": "\uf0ed  Update now", "action": "update" }, { "label": "\uf01e  Restart", "action": "restart" }]
+                                   : [{ "label": "\uf0ed  Update now", "action": "update" }]
+
+                            Rectangle
+                            {
+                                required property var modelData
+
+                                width: updatesButtonLabel.implicitWidth + 24
+                                height: 26
+                                radius: 13
+                                color: updatesButtonArea.containsMouse ? "#99931A13" : "#4D86979A"
+                                border.width: 1
+                                border.color: updatesButtonArea.containsMouse ? "#E18A42" : "#86979A"
+
+                                Text
+                                {
+                                    id: updatesButtonLabel
+
+                                    anchors.centerIn: parent
+                                    text: modelData.label
+                                    color: "#ffffff"
+                                    font.family: "JetBrainsMono Nerd Font"
+                                    font.pixelSize: 12
+                                }
+
+                                MouseArea
+                                {
+                                    id: updatesButtonArea
+
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked:
+                                    {
+                                        if (modelData.action === "restart")
+                                        {
+                                            islandWindow.promptRestart();
+                                        }
+                                        else
+                                        {
+                                            islandWindow.runUpdate();
                                         }
                                     }
                                 }

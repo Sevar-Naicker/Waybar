@@ -15,8 +15,6 @@ DEPENDENCIES=(
     "cava:cava"
     "playerctl:playerctl"
     "kitty:kitty"
-    "btop:btop"
-    "pavucontrol:pavucontrol"
     "python3:python3"
     "qs:quickshell"
     "wl-paste:wl-clipboard"

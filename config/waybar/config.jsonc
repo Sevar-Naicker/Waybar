@@ -14,7 +14,8 @@
     "modules-left": ["custom/launcher", "custom/dolphin", "custom/torii", "custom/brave", "tray"],
     // The centre is the Quickshell dynamic island (config/quickshell)
     "modules-center": [],
-    "modules-right": ["temperature", "cpu", "memory", "pulseaudio", "custom/power"],
+    // CPU, RAM, temperature and volume live in the island
+    "modules-right": ["custom/tasks", "custom/ytmusic", "custom/nightlight", "idle_inhibitor", "custom/power"],
 
     // Section: App shortcuts
     "custom/launcher": { 
@@ -94,27 +95,45 @@
         }
     },
 
-    // Section: System stats
-    "temperature": {
-        "critical-threshold": 80,
-        "format": " {temperatureC}°C",
-        "on-click": "setsid -f kitty --title 'Live Stats' btop"
+    // Section: Keep awake
+    // Click to stop the screen sleeping or locking; turns maple red while on
+    "idle_inhibitor": {
+        "format": "{icon}",
+        "format-icons": {
+            "activated": "\uf0f4 ",
+            "deactivated": "\uf0f4 "
+        },
+        "tooltip-format-activated": "Keeping awake",
+        "tooltip-format-deactivated": "Sleep allowed"
     },
 
-    "cpu": { 
-        "interval": 2, 
-        "format": " {usage}%" 
+    // Section: YouTube Music
+    "custom/ytmusic": {
+        "format": "\uf16a ",
+        "tooltip-format": "YouTube Music",
+        "on-click": "setsid -f flatpak run app.ytmdesktop.ytmdesktop"
     },
 
-    "memory": { 
-        "interval": 5, 
-        "format": " {used:0.1f}G",
-        "on-click": "setsid -f kitty --title 'Memory Stats' btop"
+    // Section: Today's task
+    // Unfinished tasks from ~/Nextcloud/Tasks.txt, so they sync with your phone
+    // Scroll to pick a task, click to mark it done, right-click to open the list
+    "custom/tasks": {
+        "exec": "python3 ~/.config/waybar/tasks.py",
+        "return-type": "json",
+        "interval": 5,
+        "on-scroll-down": "python3 ~/.config/waybar/tasks.py --next",
+        "on-scroll-up": "python3 ~/.config/waybar/tasks.py --previous",
+        "on-click": "python3 ~/.config/waybar/tasks.py --done",
+        "on-click-right": "python3 ~/.config/waybar/tasks.py --edit"
     },
 
-    "pulseaudio": { 
-        "format": "  {volume}%", 
-        "on-click": "setsid -f pavucontrol" 
+    // Section: Night light
+    // Glows amber whenever KDE's night light is warming the screen
+    "custom/nightlight": {
+        "exec": "bash ~/.config/waybar/night-light.sh",
+        "return-type": "json",
+        "interval": 3,
+        "on-click": "bash ~/.config/waybar/night-light.sh --toggle"
     },
 
     // Section: Power
