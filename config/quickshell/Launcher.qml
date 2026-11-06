@@ -345,7 +345,8 @@ MenuWindow
                     sourceSize.width: 72
                     sourceSize.height: 72
                     source: Quickshell.iconPath(appTile.modelData.icon, "application-x-executable")
-                    asynchronous: true
+
+                    // Icon-theme images must load on the main thread; loading them in the background makes Qt warn
                 }
 
                 Text

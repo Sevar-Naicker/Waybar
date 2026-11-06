@@ -12,7 +12,7 @@ window#waybar {
 
 /* THE FLOATING TEMPLE PILLS */
 #clock,
-#idle_inhibitor,
+#custom-keepawake,
 #custom-music,
 #custom-tasks,
 #custom-nightlight,
@@ -42,7 +42,7 @@ window#waybar {
 
 /* UNIVERSAL HOVER EFFECT */
 #clock:hover,
-#idle_inhibitor:hover,
+#custom-keepawake:hover,
 #custom-music:hover,
 #custom-tasks:hover,
 #custom-nightlight:hover,
@@ -113,7 +113,7 @@ tooltip label {
 }
 
 /* KEEP AWAKE: maple red while the screen is kept on */
-#idle_inhibitor.activated {
+#custom-keepawake.on {
     color: #CB3F27;
 }
 

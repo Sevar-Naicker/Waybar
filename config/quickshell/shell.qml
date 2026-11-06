@@ -259,7 +259,12 @@ ShellRoot
         id: powerMenu
     }
 
-    // Lets Waybar pills and keyboard shortcuts open the menus:  qs ipc call menus toggle launcher
+    ControlCentre
+    {
+        id: controlCentre
+    }
+
+    // Lets Waybar pills and keyboard shortcuts open the menus:  qs ipc call menus toggle launcher  (or power, controls)
     IpcHandler
     {
         target: "menus"
@@ -267,7 +272,7 @@ ShellRoot
         // The toggle function opens a menu by name, or closes it if it's already open; only one menu is open at a time
         function toggle(Name: string): void
         {
-            const Menus = { "launcher": launcherMenu, "power": powerMenu };
+            const Menus = { "launcher": launcherMenu, "power": powerMenu, "controls": controlCentre };
             const Wanted = Menus[Name];
 
             if (!Wanted)
@@ -283,6 +288,18 @@ ShellRoot
             }
 
             Wanted.shown = !WasOpen;
+        }
+    }
+
+    // Lets the coffee pill switch keep awake:  qs ipc call controls toggleKeepAwake
+    IpcHandler
+    {
+        target: "controls"
+
+        // The toggleKeepAwake function switches keep awake on or off
+        function toggleKeepAwake(): void
+        {
+            ShellState.keepAwake = !ShellState.keepAwake;
         }
     }
 
@@ -302,6 +319,13 @@ ShellRoot
         PanelWindow
         {
             id: islandWindow
+
+            // Keeps the screen awake while ShellState.keepAwake is on (the coffee pill and control centre switch it)
+            IdleInhibitor
+            {
+                window: islandWindow
+                enabled: ShellState.keepAwake
+            }
 
             // The monitor this island belongs to
             required property var modelData

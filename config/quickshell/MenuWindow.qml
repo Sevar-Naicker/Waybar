@@ -21,8 +21,11 @@ PanelWindow
     // Whatever the menu puts inside goes into the panel
     default property alias content: contentArea.data
 
-    // Stays visible just long enough for the closing animation to finish
-    visible: shown || closeTimer.running
+    // Whether the window is on screen; it stays up after closing until the animation has finished
+    // (set by hand rather than worked out from the timer, which made the window vanish and reappear for a frame)
+    property bool mapped: false
+
+    visible: mapped
 
     anchors
     {
@@ -48,10 +51,12 @@ PanelWindow
     }
 
     // Section: Closing
+    // Takes the window away once the closing animation is done, unless the menu was reopened in the meantime
     Timer
     {
         id: closeTimer
         interval: 220
+        onTriggered: menuWindow.mapped = menuWindow.shown
     }
 
     Connections
@@ -60,7 +65,12 @@ PanelWindow
 
         function onShownChanged()
         {
-            if (!menuWindow.shown)
+            if (menuWindow.shown)
+            {
+                closeTimer.stop();
+                menuWindow.mapped = true;
+            }
+            else
             {
                 closeTimer.restart();
             }

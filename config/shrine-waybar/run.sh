@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # This file contains the launcher every Shrine Waybar button goes through
 # It reads settings.sh, so the same buttons open the right app or command on any system
-#   run.sh store | browser | music | music-pill | update | system-monitor | in-terminal <command...>
+#   run.sh store | browser | music | music-pill | keepawake-pill | update | system-monitor | in-terminal <command...>
 #   run.sh open-folder <path> | show-file <path> | save-image <path> | downloads-folder | nextcloud-folder
 
 # Section: Settings
@@ -157,6 +157,22 @@ Music_Pill()
     printf '{"text": "%s", "tooltip": "%s"}\n' "$Icon" "${Name:-Music}"
 }
 
+# The Keep_Awake_Pill function prints the coffee pill from the state the island saves (on or off)
+Keep_Awake_Pill()
+{
+    local State
+    local Icon=$'\uf0f4 '
+
+    State=$(cat "$HOME/.local/state/shrine-waybar/keepawake" 2>/dev/null)
+
+    if [ "$State" = "on" ]
+    then
+        printf '{"text": "%s", "tooltip": "Keeping awake\\nClick to allow sleep", "class": "on"}\n' "$Icon"
+    else
+        printf '{"text": "%s", "tooltip": "Sleep allowed\\nClick to keep awake", "class": "off"}\n' "$Icon"
+    fi
+}
+
 # The System_Monitor function opens KDE's System Monitor, or a terminal monitor if it's missing
 System_Monitor()
 {
@@ -178,6 +194,7 @@ case "${1:-}" in
     browser) Launch_App "$SHRINE_BROWSER_APP" || Open_Path "https://duckduckgo.com" ;;
     music) Launch_App "$SHRINE_MUSIC_APP" || Open_Path "$SHRINE_MUSIC_URL" ;;
     music-pill) Music_Pill ;;
+    keepawake-pill) Keep_Awake_Pill ;;
     update) Update ;;
     update-run) Update_Run ;;
     system-monitor) System_Monitor ;;

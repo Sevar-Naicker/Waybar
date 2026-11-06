@@ -39,6 +39,9 @@ Music only appears while a media player is open, Sync only while the Nextcloud c
 | `Launcher.qml` | App launcher, with search, a calculator and web search |
 | `Calculator.js` | Works out sums typed into the launcher |
 | `PowerMenu.qml` | Lock, sleep, log out, restart and shut down |
+| `ControlCentre.qml` | Wi-Fi, Bluetooth, night light and keep awake tiles, volume and mic sliders |
+| `controls.sh` | Reports Wi-Fi (NetworkManager), Bluetooth (bluetoothctl) and night light state while the control centre is open |
+| `ShellState.qml` | Keep awake: Quickshell holds the screen awake, and the Waybar coffee pill shows and switches it |
 | `cava.conf` | Visualiser settings (12 bars, plain numbers out) |
 | `stats.sh` | Prints CPU, GPU and RAM readings every 2 seconds |
 | `updates.sh` | Checks waiting updates with your system's package manager, plus Flatpak, at login and hourly |
@@ -74,7 +77,8 @@ The island depends on three Waybar settings, which the repo's `config/waybar/con
 | See warnings and errors | `qs log` |
 | Check the stats feed | `bash ~/.config/quickshell/stats.sh` |
 | Ping the island by hand | `qs ipc call island commandDone "test" 0 3` |
-| Open a menu from a shortcut | `qs ipc call menus toggle launcher` (or `power`) |
+| Open a menu from a shortcut | `qs ipc call menus toggle launcher` (or `power`, `controls`) |
+| Switch keep awake | `qs ipc call controls toggleKeepAwake` |
 | Turn off at login | System Settings → Autostart → Dynamic Island |
 | Restart the whole bar | `pkill waybar; setsid -f waybar; sleep 1; pkill -x qs; setsid -f qs` |
 

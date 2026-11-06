@@ -15,7 +15,7 @@
     // The centre is the Quickshell dynamic island (config/quickshell)
     "modules-center": [],
     // CPU, RAM, temperature and volume live in the island
-    "modules-right": ["custom/tasks", "custom/music", "custom/nightlight", "idle_inhibitor", "custom/power"],
+    "modules-right": ["custom/tasks", "custom/music", "custom/nightlight", "custom/keepawake", "custom/power"],
 
     // Section: App shortcuts
     // The launcher and power pills open the Quickshell menus, falling back to the rofi ones if the island isn't running
@@ -99,15 +99,13 @@
     },
 
     // Section: Keep awake
-    // Click to stop the screen sleeping or locking; turns maple red while on
-    "idle_inhibitor": {
-        "format": "{icon}",
-        "format-icons": {
-            "activated": "\uf0f4 ",
-            "deactivated": "\uf0f4 "
-        },
-        "tooltip-format-activated": "Keeping awake",
-        "tooltip-format-deactivated": "Sleep allowed"
+    // Quickshell holds the screen awake; this pill shows it and toggles it (the control centre does too)
+    "custom/keepawake": {
+        "exec": "bash ~/.config/shrine-waybar/run.sh keepawake-pill",
+        "return-type": "json",
+        "interval": "once",
+        "signal": 8,
+        "on-click": "qs ipc call controls toggleKeepAwake"
     },
 
     // Section: Music
@@ -138,6 +136,7 @@
         "exec": "bash ~/.config/waybar/night-light.sh",
         "return-type": "json",
         "interval": 3,
+        "signal": 9,
         "on-click": "bash ~/.config/waybar/night-light.sh --toggle"
     },
 

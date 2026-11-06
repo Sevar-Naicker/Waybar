@@ -88,7 +88,8 @@ Floating dark-wood pills · a Quickshell dynamic island · maple-red highlights 
 | ☐ | **Today's task** | Your unfinished tasks from a plain text list, one at a time. Scroll to pick, click to tick it off, right-click to edit. With Nextcloud the list lives in `~/Nextcloud/Tasks.txt`, so you can edit it from your phone |
 | 🎵 | **Music** | Opens your music app (YTMDesktop, Spotify, …) or YouTube Music in the browser. The icon matches the app |
 | 🌙 | **Night light** | Toggles KDE's warm screen mode. Glows amber whenever the screen is warmed |
-| ☕ | **Keep awake** | Click to stop the screen sleeping or locking. Turns maple red while on |
+| ☕ | **Keep awake** | Click to stop the screen sleeping or locking. Turns maple red while on. Also in the control centre |
+| 🎛 | **Control centre** | Wi-Fi, Bluetooth, night light and keep awake tiles, plus volume and microphone sliders. Right-click Wi-Fi or Bluetooth for KDE's settings |
 | ⛩ | **Quick launch** | Dolphin, your app store (Bazaar or Discover) and your browser, one click each |
 
 ## ✦ Dynamic island
@@ -353,6 +354,9 @@ shrine-waybar/
 │   │   ├── Launcher.qml        # App launcher
 │   │   ├── Calculator.js       # The launcher's calculator
 │   │   ├── PowerMenu.qml       # Power menu
+│   │   ├── ControlCentre.qml   # Control centre
+│   │   ├── controls.sh         # Wi-Fi, Bluetooth and night light status for the control centre
+│   │   ├── ShellState.qml      # Keep awake, shared by the coffee pill and control centre
 │   │   ├── cava.conf           # Island visualiser settings
 │   │   ├── stats.sh            # CPU, GPU and RAM readings
 │   │   ├── updates.sh          # Waiting updates, for each system's package manager
