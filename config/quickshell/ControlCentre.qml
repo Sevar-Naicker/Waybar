@@ -1,4 +1,4 @@
-// This file contains the control centre: Wi-Fi, Bluetooth, night light and keep awake toggles, plus volume and mic sliders
+// This file contains the control centre: system dials, volume and mic sliders, and Wi-Fi, Bluetooth, night light and keep awake toggles
 // Left-click a tile to switch it; right-click Wi-Fi or Bluetooth for KDE's full settings
 
 import Quickshell
@@ -11,7 +11,7 @@ MenuWindow
 {
     id: controlCentre
 
-    panelWidth: 330
+    panelWidth: 372
     side: "right"
 
     // Section: State
@@ -21,11 +21,43 @@ MenuWindow
         "bluetoothAvailable": false, "bluetoothOn": false, "bluetoothDevice": "", "nightLight": false
     })
 
+    // The island's stats feed (CPU, GPU, memory, temperature), passed in by shell.qml
+    property var stats: null
+
     // Speakers and microphone, from PipeWire
     property var speaker: Pipewire.defaultAudioSink
     property var microphone: Pipewire.defaultAudioSource
 
     // Section: Functions
+
+    // The dialInfo function gives one dial's label, icon and reading (-1 means that sensor isn't available)
+    function dialInfo(Name)
+    {
+        const Stats = stats;
+
+        if (!Stats)
+        {
+            return { "label": "", "icon": "", "value": -1, "unit": "", "fill": 0, "hot": false };
+        }
+
+        if (Name === "cpu")
+        {
+            return { "label": "CPU LOAD", "icon": "\uf2db", "value": Stats.cpuUsage, "unit": "%", "fill": Stats.cpuUsage / 100, "hot": false };
+        }
+
+        if (Name === "memory")
+        {
+            const Memory = Stats.ramTotal > 0 ? Math.round(Stats.ramUsed / Stats.ramTotal * 100) : 0;
+            return { "label": "MEMORY", "icon": "\uf1c0", "value": Memory, "unit": "%", "fill": Memory / 100, "hot": false };
+        }
+
+        if (Name === "gpu")
+        {
+            return { "label": "GPU", "icon": "\uf108", "value": Stats.gpuUsage, "unit": "%", "fill": Math.max(0, Stats.gpuUsage) / 100, "hot": false };
+        }
+
+        return { "label": "TEMP", "icon": "\uf2c9", "value": Stats.cpuTemp, "unit": "°", "fill": Math.max(0, Stats.cpuTemp) / 100, "hot": Stats.cpuTemp >= 80 };
+    }
 
     // The setStatus function changes one value straight away, so a tile responds before the next check
     function setStatus(Key, Value)
@@ -194,22 +226,303 @@ MenuWindow
     Column
     {
         width: parent.width
-        spacing: 12
+        spacing: 14
 
-        // Section: Tiles
-        Grid
+        // Section: Header
+        Item
         {
             width: parent.width
+            height: 18
+
+            Text
+            {
+                anchors.left: parent.left
+                anchors.leftMargin: 4
+                anchors.verticalCenter: parent.verticalCenter
+                text: "CONTROL CENTRE"
+                color: Theme.text
+                font.family: Theme.font
+                font.pixelSize: 11
+                font.bold: true
+                font.letterSpacing: 1.5
+            }
+
+            Text
+            {
+                anchors.right: parent.right
+                anchors.rightMargin: 4
+                anchors.verticalCenter: parent.verticalCenter
+                text: "\uf013"
+                color: Theme.muted
+                font.family: Theme.font
+                font.pixelSize: 13
+
+                // Opens KDE's System Settings
+                MouseArea
+                {
+                    anchors.fill: parent
+                    anchors.margins: -8
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked:
+                    {
+                        Quickshell.execDetached(["sh", "-c", "setsid -f systemsettings >/dev/null 2>&1"]);
+                        controlCentre.closeMenu();
+                    }
+                }
+            }
+        }
+
+        // Section: Dials
+        // Arcs that fill as the number rises; the temperature turns red when it runs hot
+        Grid
+        {
+            anchors.horizontalCenter: parent.horizontalCenter
             columns: 2
+            columnSpacing: 22
+            rowSpacing: 10
+            visible: controlCentre.stats !== null
+
+            // The four dials stay put; only their numbers change, so they glide instead of being rebuilt
+            Repeater
+            {
+                model: ["cpu", "memory", "gpu", "temp"]
+
+                Item
+                {
+                    id: dial
+
+                    required property var modelData
+
+                    // This dial's label, icon and reading, worked out from the latest stats
+                    property var info: controlCentre.dialInfo(modelData)
+
+                    // The number on screen, which slides to each new reading
+                    property real shownValue: Math.max(0, info.value)
+
+                    Behavior on shownValue
+                    {
+                        NumberAnimation { duration: 900; easing.type: Easing.OutCubic }
+                    }
+
+                    width: 128
+                    height: 120
+
+                    Canvas
+                    {
+                        id: dialCanvas
+
+                        // How full the arc is, sliding to each new reading
+                        property real fill: Math.max(0, Math.min(1, dial.info.fill))
+                        property color fillColour: dial.info.hot ? Theme.accent : Theme.pastel
+
+                        Behavior on fill
+                        {
+                            NumberAnimation { duration: 900; easing.type: Easing.OutCubic }
+                        }
+
+                        Behavior on fillColour
+                        {
+                            ColorAnimation { duration: 400 }
+                        }
+
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: 116
+                        height: 116
+
+                        onFillChanged: requestPaint()
+                        onFillColourChanged: requestPaint()
+
+                        onPaint:
+                        {
+                            const Context = getContext("2d");
+                            const Middle = width / 2;
+                            const Start = Math.PI * 0.75;
+                            const Sweep = Math.PI * 1.5;
+                            Context.reset();
+                            Context.lineWidth = 7;
+                            Context.lineCap = "round";
+
+                            // Empty track
+                            Context.strokeStyle = Theme.cardHover;
+                            Context.beginPath();
+                            Context.arc(Middle, Middle, Middle - 6, Start, Start + Sweep);
+                            Context.stroke();
+
+                            // Filled part
+                            if (fill > 0.005)
+                            {
+                                Context.strokeStyle = fillColour;
+                                Context.beginPath();
+                                Context.arc(Middle, Middle, Middle - 6, Start, Start + Sweep * fill);
+                                Context.stroke();
+                            }
+                        }
+                    }
+
+                    Column
+                    {
+                        anchors.centerIn: dialCanvas
+                        spacing: 2
+
+                        Row
+                        {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            spacing: 5
+
+                            Text
+                            {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: dial.info.icon
+                                color: Theme.muted
+                                font.family: Theme.font
+                                font.pixelSize: 13
+                            }
+
+                            Text
+                            {
+                                text: dial.info.value < 0 ? "—" : Math.round(dial.shownValue) + dial.info.unit
+                                color: dial.info.hot ? Theme.accentHover : Theme.text
+                                font.family: Theme.font
+                                font.pixelSize: 22
+                                font.bold: true
+                            }
+                        }
+
+                        Text
+                        {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: dial.info.label
+                            color: Theme.muted
+                            font.family: Theme.font
+                            font.pixelSize: 9
+                            font.bold: true
+                            font.letterSpacing: 1
+                        }
+                    }
+                }
+            }
+        }
+
+        // Section: Sliders
+        // Thick bars that fill cream; click or drag anywhere, scroll for 5% steps, click the icon to mute
+        Repeater
+        {
+            model: [
+                { "label": "Volume", "icon": "\uf028", "mutedIcon": "\uf026" },
+                { "label": "Microphone", "icon": "\uf130", "mutedIcon": "\uf131" }
+            ]
+
+            Rectangle
+            {
+                id: sliderRow
+
+                required property var modelData
+                required property int index
+
+                // The device this slider controls, and its audio controls once PipeWire has filled them in
+                property var device: index === 0 ? controlCentre.speaker : controlCentre.microphone
+                property var audio: device && device.audio ? device.audio : null
+                property real level: audio ? audio.volume : 0
+                property bool muted: audio ? audio.muted : false
+
+                // The setLevel function sets the volume (0 to 1) and unmutes
+                function setLevel(Value)
+                {
+                    if (audio)
+                    {
+                        audio.muted = false;
+                        audio.volume = Math.max(0, Math.min(1, Value));
+                    }
+                }
+
+                width: parent.width
+                height: 34
+                radius: 17
+                color: Theme.card
+                border.width: 1
+                border.color: Theme.cardBorder
+                visible: device !== null
+
+                // The filled part (never narrower than the icon, so the icon always sits on it)
+                Rectangle
+                {
+                    height: parent.height
+                    radius: parent.radius
+                    width: Math.max(parent.height, parent.width * Math.min(1, sliderRow.level))
+                    color: sliderRow.muted ? Theme.outline : Theme.pastel
+                    opacity: sliderRow.muted ? 0.5 : 1
+
+                    Behavior on width
+                    {
+                        NumberAnimation { duration: 90 }
+                    }
+                }
+
+                MouseArea
+                {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+
+                    onPressed: (Mouse) => sliderRow.setLevel(Mouse.x / sliderRow.width)
+                    onPositionChanged: (Mouse) => sliderRow.setLevel(Mouse.x / sliderRow.width)
+                    onWheel: (Wheel) => sliderRow.setLevel(sliderRow.level + (Wheel.angleDelta.y > 0 ? 0.05 : -0.05))
+                }
+
+                Text
+                {
+                    anchors.left: parent.left
+                    anchors.leftMargin: 11
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 16
+                    horizontalAlignment: Text.AlignHCenter
+                    text: sliderRow.muted ? sliderRow.modelData.mutedIcon : sliderRow.modelData.icon
+                    color: Theme.pastelText
+                    font.family: Theme.font
+                    font.pixelSize: 14
+
+                    MouseArea
+                    {
+                        anchors.fill: parent
+                        anchors.margins: -8
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked:
+                        {
+                            if (sliderRow.audio)
+                            {
+                                sliderRow.audio.muted = !sliderRow.muted;
+                            }
+                        }
+                    }
+                }
+
+                Text
+                {
+                    anchors.right: parent.right
+                    anchors.rightMargin: 14
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: sliderRow.muted ? "MUTED" : Math.round(sliderRow.level * 100) + "%"
+                    color: sliderRow.level > 0.9 && !sliderRow.muted ? Theme.pastelText : Theme.muted
+                    font.family: Theme.font
+                    font.pixelSize: 10
+                    font.bold: true
+                }
+            }
+        }
+
+        // Section: Tiles
+        // Square toggles that fill cream when on; right-click Wi-Fi or Bluetooth for KDE's settings
+        Row
+        {
+            width: parent.width
             spacing: 8
 
             Repeater
             {
                 model: [
-                    { "name": "wifi", "label": "Wi-Fi", "icon": "" },
-                    { "name": "bluetooth", "label": "Bluetooth", "icon": "" },
-                    { "name": "night", "label": "Night light", "icon": "" },
-                    { "name": "awake", "label": "Keep awake", "icon": "" }
+                    { "name": "wifi", "label": "WI-FI", "icon": "\uf1eb" },
+                    { "name": "bluetooth", "label": "BLUETOOTH", "icon": "\uf294" },
+                    { "name": "night", "label": "NIGHT", "icon": "\uf186" },
+                    { "name": "awake", "label": "AWAKE", "icon": "\uf0f4" }
                 ]
 
                 Rectangle
@@ -220,10 +533,12 @@ MenuWindow
 
                     property bool active: controlCentre.tileActive(modelData.name)
 
-                    width: (parent.width - 8) / 2
-                    height: 58
+                    width: (parent.width - 24) / 4
+                    height: 74
                     radius: 14
-                    color: active ? Theme.accent : (tileArea.containsMouse ? Theme.softHover : Theme.soft)
+                    color: active ? Theme.pastel : (tileArea.containsMouse ? Theme.cardHover : Theme.card)
+                    border.width: 1
+                    border.color: active ? "transparent" : Theme.cardBorder
 
                     Behavior on color
                     {
@@ -232,47 +547,27 @@ MenuWindow
 
                     Text
                     {
-                        id: tileIcon
-
-                        anchors.left: parent.left
-                        anchors.leftMargin: 12
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 18
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        y: 15
                         text: tile.modelData.icon
-                        color: tile.active ? Theme.accentText : Theme.text
+                        color: tile.active ? Theme.pastelText : Theme.text
                         font.family: Theme.font
-                        font.pixelSize: 16
+                        font.pixelSize: 20
                     }
 
-                    Column
+                    Text
                     {
-                        anchors.left: tileIcon.right
-                        anchors.leftMargin: 10
-                        anchors.right: parent.right
-                        anchors.rightMargin: 8
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 2
-
-                        Text
-                        {
-                            width: parent.width
-                            text: tile.modelData.label
-                            elide: Text.ElideRight
-                            color: tile.active ? Theme.accentText : Theme.text
-                            font.family: Theme.font
-                            font.pixelSize: 12
-                            font.bold: true
-                        }
-
-                        Text
-                        {
-                            width: parent.width
-                            text: controlCentre.tileSubtitle(tile.modelData.name)
-                            elide: Text.ElideRight
-                            color: tile.active ? Theme.accentText : Theme.muted
-                            font.family: Theme.font
-                            font.pixelSize: 11
-                        }
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        y: 48
+                        width: parent.width - 6
+                        horizontalAlignment: Text.AlignHCenter
+                        elide: Text.ElideRight
+                        text: tile.modelData.label
+                        color: tile.active ? Theme.pastelText : Theme.muted
+                        font.family: Theme.font
+                        font.pixelSize: 9
+                        font.bold: true
+                        font.letterSpacing: 0.5
                     }
 
                     MouseArea
@@ -302,139 +597,42 @@ MenuWindow
             }
         }
 
-        // Section: Sliders
-        Repeater
+        // Section: Connections
+        // What the network and Bluetooth are connected to
+        Rectangle
         {
-            model: [
-                { "label": "Volume", "icon": "", "mutedIcon": "" },
-                { "label": "Microphone", "icon": "", "mutedIcon": "" }
-            ]
+            width: parent.width
+            height: 36
+            radius: 12
+            color: Theme.card
+            border.width: 1
+            border.color: Theme.cardBorder
 
-            Item
+            Row
             {
-                id: sliderRow
+                anchors.centerIn: parent
+                spacing: 14
 
-                required property var modelData
-                required property int index
-
-                // The device this slider controls, and its audio controls once PipeWire has filled them in
-                property var device: index === 0 ? controlCentre.speaker : controlCentre.microphone
-                property var audio: device && device.audio ? device.audio : null
-                property real level: audio ? audio.volume : 0
-                property bool muted: audio ? audio.muted : false
-
-                // The setLevel function sets the volume (0 to 1) and unmutes
-                function setLevel(Value)
+                Repeater
                 {
-                    if (audio)
+                    model: [
+                        { "icon": controlCentre.status.wifiAvailable ? "\uf1eb" : "\uf0e8", "text": controlCentre.tileSubtitle("wifi") },
+                        { "icon": "\uf294", "text": controlCentre.tileSubtitle("bluetooth") }
+                    ]
+
+                    Text
                     {
-                        audio.muted = false;
-                        audio.volume = Math.max(0, Math.min(1, Value));
-                    }
-                }
+                        required property var modelData
 
-                width: parent.width
-                height: 24
-                visible: device !== null
-
-                // Click the icon to mute or unmute
-                Text
-                {
-                    id: sliderIcon
-
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 20
-                    text: sliderRow.muted ? sliderRow.modelData.mutedIcon : sliderRow.modelData.icon
-                    color: sliderRow.muted ? Theme.outline : Theme.text
-                    font.family: Theme.font
-                    font.pixelSize: 15
-
-                    MouseArea
-                    {
-                        anchors.fill: parent
-                        anchors.margins: -6
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked:
-                        {
-                            if (sliderRow.audio)
-                            {
-                                sliderRow.audio.muted = !sliderRow.muted;
-                            }
-                        }
-                    }
-                }
-
-                Text
-                {
-                    id: sliderValue
-
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 34
-                    horizontalAlignment: Text.AlignRight
-                    text: sliderRow.muted ? "Off" : Math.round(sliderRow.level * 100) + "%"
-                    color: Theme.muted
-                    font.family: Theme.font
-                    font.pixelSize: 11
-                }
-
-                // Click or drag anywhere on the track; scroll over it for 5% steps
-                Rectangle
-                {
-                    id: sliderTrack
-
-                    anchors.left: sliderIcon.right
-                    anchors.right: sliderValue.left
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 10
-                    anchors.verticalCenter: parent.verticalCenter
-                    height: 6
-                    radius: 3
-                    color: Theme.soft
-
-                    Rectangle
-                    {
-                        height: parent.height
-                        radius: 3
-                        width: parent.width * sliderRow.level
-                        color: sliderRow.muted ? Theme.outline : Theme.accent
-                    }
-
-                    Rectangle
-                    {
-                        anchors.verticalCenter: parent.verticalCenter
-                        x: parent.width * sliderRow.level - width / 2
-                        width: 12
-                        height: 12
-                        radius: 6
-                        color: Theme.text
-                    }
-
-                    MouseArea
-                    {
-                        anchors.fill: parent
-                        anchors.topMargin: -8
-                        anchors.bottomMargin: -8
-                        cursorShape: Qt.PointingHandCursor
-
-                        onPressed: (Mouse) => sliderRow.setLevel(Mouse.x / sliderTrack.width)
-                        onPositionChanged: (Mouse) => sliderRow.setLevel(Mouse.x / sliderTrack.width)
-                        onWheel: (Wheel) => sliderRow.setLevel(sliderRow.level + (Wheel.angleDelta.y > 0 ? 0.05 : -0.05))
+                        width: Math.min(implicitWidth, 150)
+                        elide: Text.ElideRight
+                        text: modelData.icon + "  " + modelData.text
+                        color: Theme.muted
+                        font.family: Theme.font
+                        font.pixelSize: 11
                     }
                 }
             }
-        }
-
-        // Section: Hint
-        Text
-        {
-            width: parent.width
-            horizontalAlignment: Text.AlignHCenter
-            text: "Right-click Wi-Fi or Bluetooth for settings"
-            color: Theme.muted
-            font.family: Theme.font
-            font.pixelSize: 11
         }
     }
 }

@@ -19,6 +19,7 @@ ShrineKeys=(
     SHRINE_SYSTEM SHRINE_UPDATE_COMMAND SHRINE_TERMINAL
     SHRINE_STORE_APP SHRINE_BROWSER_APP SHRINE_MUSIC_APP SHRINE_MUSIC_URL
     SHRINE_TASKS_FILE SHRINE_NEXTCLOUD_DIR SHRINE_DOWNLOADS_DIR SHRINE_SCREENSHOTS_DIR
+    SHRINE_WEATHER_LOCATION
 )
 
 # The Os_Release_Field function reads one field (like ID or ID_LIKE) from os-release
@@ -228,6 +229,7 @@ fi
 : "${SHRINE_NEXTCLOUD_DIR=$HOME/Nextcloud}"
 : "${SHRINE_DOWNLOADS_DIR=$(User_Dir DOWNLOAD Downloads)}"
 : "${SHRINE_SCREENSHOTS_DIR=$(Default_Screenshots_Dir)}"
+: "${SHRINE_WEATHER_LOCATION=}"
 
 if [ -z "${SHRINE_TASKS_FILE+set}" ]
 then
@@ -293,6 +295,10 @@ SHRINE_NEXTCLOUD_DIR=$(Q "$SHRINE_NEXTCLOUD_DIR")
 # Watched by the island's downloads section and pop-ups
 SHRINE_DOWNLOADS_DIR=$(Q "$SHRINE_DOWNLOADS_DIR")
 SHRINE_SCREENSHOTS_DIR=$(Q "$SHRINE_SCREENSHOTS_DIR")
+
+# Section: Weather
+# Town or city for the island's weather (e.g. "Johannesburg"); leave empty to use your connection's location
+SHRINE_WEATHER_LOCATION=$(Q "$SHRINE_WEATHER_LOCATION")
 EOF
 
     echo "  Created $ShrineConf"

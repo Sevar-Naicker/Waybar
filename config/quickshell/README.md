@@ -10,7 +10,7 @@ Built for KDE Plasma 6 on Wayland, on any distro, and runs on every monitor.
 
 | Section | Collapsed | Expanded card |
 | --- | --- | --- |
-| Clock | Time (date on hover) | Large time and full date |
+| Clock | Time (date on hover) | Click opens the calendar menu |
 | Music | Album art, title, cava visualiser (click art to pause) | Art, title, artist, seekable progress bar, controls |
 | Volume | Level bar and percentage | Slider, mute, one-click output device switching (scroll to adjust) |
 | Stats | CPU %, CPU and GPU temperature | CPU, GPU and RAM bars, Open System Monitor |
@@ -39,7 +39,9 @@ Music only appears while a media player is open, Sync only while the Nextcloud c
 | `Launcher.qml` | App launcher, with search, a calculator and web search |
 | `Calculator.js` | Works out sums typed into the launcher |
 | `PowerMenu.qml` | Lock, sleep, log out, restart and shut down |
-| `ControlCentre.qml` | Wi-Fi, Bluetooth, night light and keep awake tiles, volume and mic sliders |
+| `CalendarMenu.qml` | Month (scroll or ‹ › to change it), big clock with the 3-hour forecast revolving round it (turns by itself, or scroll, use the arrow keys or click a pill), three days of weather and dials for the slot at the front |
+| `ControlCentre.qml` | CPU, memory, GPU and temperature dials, volume and mic sliders, Wi-Fi, Bluetooth, night light and keep awake tiles |
+| `weather.py` | Fetches the weather from wttr.in every 30 minutes for the calendar menu (set `SHRINE_WEATHER_LOCATION` in shrine.conf, or leave it empty to use your connection's location) |
 | `controls.sh` | Reports Wi-Fi (NetworkManager), Bluetooth (bluetoothctl) and night light state while the control centre is open |
 | `ShellState.qml` | Keep awake: Quickshell holds the screen awake, and the Waybar coffee pill shows and switches it |
 | `cava.conf` | Visualiser settings (12 bars, plain numbers out) |
@@ -77,7 +79,7 @@ The island depends on three Waybar settings, which the repo's `config/waybar/con
 | See warnings and errors | `qs log` |
 | Check the stats feed | `bash ~/.config/quickshell/stats.sh` |
 | Ping the island by hand | `qs ipc call island commandDone "test" 0 3` |
-| Open a menu from a shortcut | `qs ipc call menus toggle launcher` (or `power`, `controls`) |
+| Open a menu from a shortcut | `qs ipc call menus toggle launcher` (or `power`, `controls`, `calendar`) |
 | Switch keep awake | `qs ipc call controls toggleKeepAwake` |
 | Turn off at login | System Settings → Autostart → Dynamic Island |
 | Restart the whole bar | `pkill waybar; setsid -f waybar; sleep 1; pkill -x qs; setsid -f qs` |

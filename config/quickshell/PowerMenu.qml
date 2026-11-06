@@ -10,7 +10,7 @@ MenuWindow
 {
     id: powerMenu
 
-    panelWidth: 440
+    panelWidth: 460
     side: "right"
 
     // Section: State
@@ -18,6 +18,8 @@ MenuWindow
     property string fullName: ""
     property string uptimeText: ""
     property string systemName: ""
+    property string hostName: ""
+    property string kernel: ""
 
     // The highlighted button, and the one waiting for its confirming second click (-1 means none)
     property int selected: -1
@@ -103,7 +105,7 @@ MenuWindow
     }
 
     // Section: Details
-    // Reads your full name, how long the computer has been on, and the system's name
+    // Reads your full name, how long the computer has been on, the system's name, the computer's name and the kernel
     Process
     {
         id: detailsProcess
@@ -113,7 +115,9 @@ MenuWindow
         command: ["sh", "-c",
             "getent passwd \"$USER\" | cut -d: -f5 | cut -d, -f1; " +
             "cut -d' ' -f1 /proc/uptime; " +
-            "( . /etc/os-release 2>/dev/null; echo \"${NAME:-Linux}\" )"]
+            "( . /etc/os-release 2>/dev/null; echo \"${NAME:-Linux}\" ); " +
+            "cat /proc/sys/kernel/hostname; " +
+            "uname -r"]
 
         onStarted: lines = []
 
@@ -132,6 +136,8 @@ MenuWindow
             powerMenu.uptimeText = "Up " + (Hours > 0 ? Hours + "h " : "") + Minutes + "m";
 
             powerMenu.systemName = lines[2] || "";
+            powerMenu.hostName = lines[3] || "";
+            powerMenu.kernel = lines[4] || "";
         }
     }
 
@@ -185,53 +191,127 @@ MenuWindow
         }
 
         // Section: Who's signed in
-        Row
+        // A card with your initials, name, user and computer, and chips for the system, kernel and uptime
+        Rectangle
         {
-            spacing: 12
+            width: parent.width
+            height: 112
+            radius: 16
+            color: Theme.card
+            border.width: 1
+            border.color: Theme.cardBorder
 
             Rectangle
             {
-                width: 40
-                height: 40
-                radius: 20
-                color: Theme.accent
+                id: badge
+
+                anchors.left: parent.left
+                anchors.leftMargin: 18
+                anchors.verticalCenter: parent.verticalCenter
+                width: 70
+                height: 70
+                radius: 35
+                color: Theme.pastel
+                border.width: 3
+                border.color: Theme.panel
+
+                // Thin outer ring, like a photo frame
+                Rectangle
+                {
+                    anchors.centerIn: parent
+                    width: parent.width + 6
+                    height: parent.height + 6
+                    radius: width / 2
+                    color: "transparent"
+                    border.width: 1
+                    border.color: Theme.pastel
+                    opacity: 0.6
+                }
 
                 Text
                 {
                     anchors.centerIn: parent
                     text: powerMenu.initials()
-                    color: Theme.accentText
+                    color: Theme.pastelText
                     font.family: Theme.font
-                    font.pixelSize: 14
+                    font.pixelSize: 24
                     font.bold: true
                 }
             }
 
             Column
             {
+                anchors.left: badge.right
+                anchors.leftMargin: 18
+                anchors.right: parent.right
+                anchors.rightMargin: 14
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 2
+                spacing: 4
 
                 Text
                 {
+                    width: parent.width
+                    elide: Text.ElideRight
                     text: powerMenu.fullName || powerMenu.userName
                     color: Theme.text
                     font.family: Theme.font
-                    font.pixelSize: 14
+                    font.pixelSize: 17
                     font.bold: true
                 }
 
                 Text
                 {
-                    text: [powerMenu.uptimeText, powerMenu.systemName].filter(Part => Part !== "").join(" · ")
+                    width: parent.width
+                    elide: Text.ElideRight
+                    text: "@" + powerMenu.userName + (powerMenu.hostName ? " on " + powerMenu.hostName : "")
                     color: Theme.muted
                     font.family: Theme.font
                     font.pixelSize: 11
+                }
+
+                Flow
+                {
+                    width: parent.width
+                    spacing: 6
+                    topPadding: 4
+
+                    Repeater
+                    {
+                        model: [
+                            { "icon": "\uf17c", "text": powerMenu.systemName },
+                            { "icon": "\uf2db", "text": powerMenu.kernel.split("-")[0] },
+                            { "icon": "\uf017", "text": powerMenu.uptimeText }
+                        ].filter(Chip => Chip.text !== "")
+
+                        Rectangle
+                        {
+                            required property var modelData
+
+                            width: chipText.implicitWidth + 16
+                            height: 20
+                            radius: 6
+                            color: Theme.card
+                            border.width: 1
+                            border.color: Theme.cardBorder
+
+                            Text
+                            {
+                                id: chipText
+
+                                anchors.centerIn: parent
+                                text: parent.modelData.icon + "  " + parent.modelData.text
+                                color: Theme.muted
+                                font.family: Theme.font
+                                font.pixelSize: 10
+                            }
+                        }
+                    }
                 }
             }
         }
 
         // Section: Buttons
+        // Square tiles; the highlighted one fills cream, one waiting for its second click fills red
         Row
         {
             width: parent.width
@@ -252,23 +332,23 @@ MenuWindow
                     property bool isSelected: powerMenu.selected === index
 
                     width: (parent.width - 8 * (powerMenu.actions.length - 1)) / powerMenu.actions.length
-                    height: 82
+                    height: 78
                     radius: 14
-                    color: isArmed || isSelected ? Theme.accent : Theme.soft
-                    border.width: isArmed ? 1 : 0
-                    border.color: Theme.accentHover
+                    color: isArmed ? Theme.accent : (isSelected ? Theme.pastel : Theme.card)
+                    border.width: 1
+                    border.color: isArmed || isSelected ? "transparent" : Theme.cardBorder
 
                     Behavior on color
                     {
-                        ColorAnimation { duration: 120 }
+                        ColorAnimation { duration: 140 }
                     }
 
                     Text
                     {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        y: 16
+                        y: 15
                         text: actionTile.modelData.icon
-                        color: actionTile.isArmed || actionTile.isSelected ? Theme.accentText : Theme.text
+                        color: actionTile.isArmed ? Theme.accentText : (actionTile.isSelected ? Theme.pastelText : Theme.text)
                         font.family: Theme.font
                         font.pixelSize: 22
                     }
@@ -276,15 +356,16 @@ MenuWindow
                     Text
                     {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        y: 52
+                        y: 50
                         width: parent.width - 6
                         horizontalAlignment: Text.AlignHCenter
-                        text: actionTile.isArmed ? "Again" : actionTile.modelData.label
+                        text: actionTile.isArmed ? "AGAIN" : actionTile.modelData.label.toUpperCase()
                         elide: Text.ElideRight
-                        color: actionTile.isArmed || actionTile.isSelected ? Theme.accentText : Theme.text
+                        color: actionTile.isArmed ? Theme.accentText : (actionTile.isSelected ? Theme.pastelText : Theme.muted)
                         font.family: Theme.font
-                        font.pixelSize: 11
-                        font.bold: actionTile.isArmed
+                        font.pixelSize: 9
+                        font.bold: true
+                        font.letterSpacing: 1
                     }
 
                     MouseArea
@@ -306,10 +387,11 @@ MenuWindow
             horizontalAlignment: Text.AlignHCenter
             text: powerMenu.armed >= 0
                   ? "Click " + powerMenu.actions[powerMenu.armed].label.toLowerCase() + " again to confirm"
-                  : "Esc to close"
-            color: Theme.muted
+                  : "Arrow keys and Enter · Esc to close"
+            color: powerMenu.armed >= 0 ? Theme.accentHover : Theme.muted
+            opacity: powerMenu.armed >= 0 ? 1 : 0.7
             font.family: Theme.font
-            font.pixelSize: 11
+            font.pixelSize: 10
         }
     }
 }

@@ -117,7 +117,7 @@ PanelWindow
         radius: 20
         color: Theme.panel
         border.width: 1
-        border.color: Theme.outline
+        border.color: Theme.edge
 
         // Springs down from the bar when opening, shrinks back when closing
         transformOrigin: menuWindow.side === "right" ? Item.TopRight : (menuWindow.side === "centre" ? Item.Top : Item.TopLeft)
@@ -138,6 +138,43 @@ PanelWindow
         MouseArea
         {
             anchors.fill: parent
+        }
+
+        // A soft glow in two corners, tinted by the theme (fades out well before the rounded edges)
+        Canvas
+        {
+            id: glow
+
+            anchors.fill: parent
+            opacity: 0.22
+
+            onPaint:
+            {
+                const Context = getContext("2d");
+                Context.reset();
+
+                // Only paint inside the panel's rounded shape
+                Context.beginPath();
+                Context.roundedRect(1, 1, width - 2, height - 2, 19, 19);
+                Context.clip();
+
+                const Spots = [
+                    { "x": width * 0.85, "y": height * 0.1, "size": Math.max(width, height) * 0.55, "colour": Theme.glowA },
+                    { "x": width * 0.1, "y": height * 0.95, "size": Math.max(width, height) * 0.45, "colour": Theme.glowB }
+                ];
+
+                for (const Spot of Spots)
+                {
+                    const Fade = Context.createRadialGradient(Spot.x, Spot.y, 0, Spot.x, Spot.y, Spot.size);
+                    Fade.addColorStop(0, Qt.rgba(Spot.colour.r, Spot.colour.g, Spot.colour.b, 0.5));
+                    Fade.addColorStop(1, Qt.rgba(Spot.colour.r, Spot.colour.g, Spot.colour.b, 0));
+                    Context.fillStyle = Fade;
+                    Context.fillRect(0, 0, width, height);
+                }
+            }
+
+            onWidthChanged: requestPaint()
+            onHeightChanged: requestPaint()
         }
 
         Item

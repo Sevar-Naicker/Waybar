@@ -11,7 +11,7 @@ MenuWindow
 {
     id: launcher
 
-    panelWidth: 470
+    panelWidth: 500
     side: "left"
 
     // Section: State
@@ -180,27 +180,39 @@ MenuWindow
     Column
     {
         width: parent.width
-        spacing: 10
+        spacing: 12
 
         // Section: Search box
+        // A card with a cream search badge on the left
         Rectangle
         {
             width: parent.width
-            height: 38
-            radius: 12
-            color: Theme.soft
+            height: 48
+            radius: 14
+            color: Theme.card
+            border.width: 1
+            border.color: searchInput.activeFocus ? Theme.pastel : Theme.cardBorder
 
-            Text
+            Rectangle
             {
                 id: searchIcon
 
                 anchors.left: parent.left
-                anchors.leftMargin: 12
+                anchors.leftMargin: 7
                 anchors.verticalCenter: parent.verticalCenter
-                text: ""
-                color: Theme.muted
-                font.family: Theme.font
-                font.pixelSize: 14
+                width: 34
+                height: 34
+                radius: 10
+                color: Theme.pastel
+
+                Text
+                {
+                    anchors.centerIn: parent
+                    text: "\uf002"
+                    color: Theme.pastelText
+                    font.family: Theme.font
+                    font.pixelSize: 14
+                }
             }
 
             TextInput
@@ -208,14 +220,14 @@ MenuWindow
                 id: searchInput
 
                 anchors.left: searchIcon.right
-                anchors.leftMargin: 10
+                anchors.leftMargin: 12
                 anchors.right: parent.right
-                anchors.rightMargin: 12
+                anchors.rightMargin: 14
                 anchors.verticalCenter: parent.verticalCenter
                 color: Theme.text
                 selectionColor: Theme.accent
                 font.family: Theme.font
-                font.pixelSize: 13
+                font.pixelSize: 14
                 clip: true
 
                 onTextChanged: launcher.query = text
@@ -276,15 +288,15 @@ MenuWindow
             height: launcher.calcResult !== null ? 34 : 0
             visible: launcher.calcResult !== null
             radius: 12
-            color: Theme.accent
+            color: Theme.pastel
 
             Text
             {
                 anchors.left: parent.left
-                anchors.leftMargin: 12
+                anchors.leftMargin: 14
                 anchors.verticalCenter: parent.verticalCenter
                 text: "= " + launcher.calcResult
-                color: Theme.accentText
+                color: Theme.pastelText
                 font.family: Theme.font
                 font.pixelSize: 14
                 font.bold: true
@@ -293,13 +305,26 @@ MenuWindow
             Text
             {
                 anchors.right: parent.right
-                anchors.rightMargin: 12
+                anchors.rightMargin: 14
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Enter to copy"
-                color: Theme.accentText
+                text: "ENTER TO COPY"
+                color: Theme.pastelText
                 font.family: Theme.font
                 font.pixelSize: 11
             }
+        }
+
+        // Section: Apps heading
+        Text
+        {
+            visible: launcher.results.length > 0
+            leftPadding: 4
+            text: launcher.query.trim() === "" ? "MOST USED" : "RESULTS · " + launcher.results.length
+            color: Theme.muted
+            font.family: Theme.font
+            font.pixelSize: 10
+            font.bold: true
+            font.letterSpacing: 1.5
         }
 
         // Section: Apps
@@ -311,7 +336,7 @@ MenuWindow
             height: launcher.results.length > 0 ? 3 * cellHeight : 0
             visible: launcher.results.length > 0
             cellWidth: width / 5
-            cellHeight: 90
+            cellHeight: 98
             clip: true
             model: launcher.results
             boundsBehavior: Flickable.StopAtBounds
@@ -326,10 +351,12 @@ MenuWindow
 
                 property bool isCurrent: GridView.isCurrentItem
 
-                width: appGrid.cellWidth - 6
-                height: appGrid.cellHeight - 6
-                radius: 12
-                color: isCurrent ? Theme.accent : (tileHover.containsMouse ? Theme.softHover : "transparent")
+                width: appGrid.cellWidth - 8
+                height: appGrid.cellHeight - 8
+                radius: 14
+                color: isCurrent ? Theme.pastel : (tileHover.containsMouse ? Theme.cardHover : Theme.card)
+                border.width: 1
+                border.color: isCurrent ? "transparent" : Theme.cardBorder
 
                 Behavior on color
                 {
@@ -339,7 +366,7 @@ MenuWindow
                 Image
                 {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    y: 12
+                    y: 14
                     width: 36
                     height: 36
                     sourceSize.width: 72
@@ -352,14 +379,14 @@ MenuWindow
                 Text
                 {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    y: 54
+                    y: 57
                     width: parent.width - 8
                     horizontalAlignment: Text.AlignHCenter
                     text: appTile.modelData.name
                     wrapMode: Text.Wrap
                     maximumLineCount: 2
                     elide: Text.ElideRight
-                    color: appTile.isCurrent ? Theme.accentText : Theme.text
+                    color: appTile.isCurrent ? Theme.pastelText : Theme.text
                     font.family: Theme.font
                     font.pixelSize: 11
                 }

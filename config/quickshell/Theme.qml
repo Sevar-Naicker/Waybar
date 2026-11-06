@@ -10,9 +10,23 @@ import QtQuick
 Singleton
 {
     // Section: Colours
-    // Panel fill and outline, matching the Waybar pills
-    property color panel: "#F22A1D11"
+    // Menu panel fill (darker than the bar, nearly solid), its faint edge, and the grey used for switched-off things
+    property color panel: "#F71C1611"
+    property color edge: "#1FFFFFFF"
     property color outline: "#86979A"
+
+    // Cards inside a panel: a slightly lighter fill with a faint border, brighter on hover
+    property color card: "#0DFFFFFF"
+    property color cardBorder: "#14FFFFFF"
+    property color cardHover: "#1AFFFFFF"
+
+    // The soft fill for whatever's selected or switched on, and the dark text that sits on it
+    property color pastel: "#E5D3B3"
+    property color pastelText: "#1C1611"
+
+    // Colours of the glow in each panel's corners
+    property color glowA: "#CB3F27"
+    property color glowB: "#E18A42"
 
     // Maple red for selected things, gold for hover outlines
     property color accent: "#CB3F27"

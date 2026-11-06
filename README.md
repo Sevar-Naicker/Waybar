@@ -89,7 +89,8 @@ Floating dark-wood pills · a Quickshell dynamic island · maple-red highlights 
 | 🎵 | **Music** | Opens your music app (YTMDesktop, Spotify, …) or YouTube Music in the browser. The icon matches the app |
 | 🌙 | **Night light** | Toggles KDE's warm screen mode. Glows amber whenever the screen is warmed |
 | ☕ | **Keep awake** | Click to stop the screen sleeping or locking. Turns maple red while on. Also in the control centre |
-| 🎛 | **Control centre** | Wi-Fi, Bluetooth, night light and keep awake tiles, plus volume and microphone sliders. Right-click Wi-Fi or Bluetooth for KDE's settings |
+| 📅 | **Calendar** | Click the island's clock. Month on the left, a big clock with the forecast revolving round it (it turns by itself; scroll or click a pill to turn it yourself), and the weather with wind, humidity, rain and feels-like dials for the slot at the front |
+| 🎛 | **Control centre** | CPU, memory, GPU and temperature dials, volume and microphone sliders, and Wi-Fi, Bluetooth, night light and keep awake tiles. Right-click Wi-Fi or Bluetooth for KDE's settings |
 | ⛩ | **Quick launch** | Dolphin, your app store (Bazaar or Discover) and your browser, one click each |
 
 ## ✦ Dynamic island
@@ -294,6 +295,7 @@ Your own choices live in `~/.config/shrine-waybar/shrine.conf`. The installer fi
 | `SHRINE_NEXTCLOUD_DIR` | Folder the sync card opens | `$HOME/Nextcloud` |
 | `SHRINE_DOWNLOADS_DIR` | Folder the downloads section watches | `$HOME/Downloads` |
 | `SHRINE_SCREENSHOTS_DIR` | Folder screenshots pop up from, and copied images save to | `$HOME/Pictures/Screenshots` |
+| `SHRINE_WEATHER_LOCATION` | Town for the island's weather (empty uses your connection's location) | `Johannesburg` |
 
 App settings use the app's ID, which is its `.desktop` file name without `.desktop`. `ls /usr/share/applications ~/.local/share/applications /var/lib/flatpak/exports/share/applications` lists them.
 
@@ -354,7 +356,9 @@ shrine-waybar/
 │   │   ├── Launcher.qml        # App launcher
 │   │   ├── Calculator.js       # The launcher's calculator
 │   │   ├── PowerMenu.qml       # Power menu
+│   │   ├── CalendarMenu.qml    # Calendar, clock and forecast ring
 │   │   ├── ControlCentre.qml   # Control centre
+│   │   ├── weather.py          # Weather from wttr.in for the calendar
 │   │   ├── controls.sh         # Wi-Fi, Bluetooth and night light status for the control centre
 │   │   ├── ShellState.qml      # Keep awake, shared by the coffee pill and control centre
 │   │   ├── cava.conf           # Island visualiser settings

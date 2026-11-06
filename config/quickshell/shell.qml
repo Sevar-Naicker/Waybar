@@ -13,6 +13,8 @@ import QtQuick.Effects
 // Section: Shell root
 ShellRoot
 {
+    id: shellRoot
+
     // Section: Clock source
     SystemClock
     {
@@ -248,7 +250,7 @@ ShellRoot
     }
 
     // Section: Menus
-    // Each menu lives in its own file next to this one (Launcher.qml, PowerMenu.qml)
+    // Each menu lives in its own file next to this one (Launcher.qml, PowerMenu.qml, ControlCentre.qml, CalendarMenu.qml)
     Launcher
     {
         id: launcherMenu
@@ -262,32 +264,44 @@ ShellRoot
     ControlCentre
     {
         id: controlCentre
+        stats: statsProcess
     }
 
-    // Lets Waybar pills and keyboard shortcuts open the menus:  qs ipc call menus toggle launcher  (or power, controls)
+    CalendarMenu
+    {
+        id: calendarMenu
+    }
+
+    // The toggleMenu function opens a menu by name, or closes it if it's already open; only one menu is open at a time
+    function toggleMenu(Name)
+    {
+        const Menus = { "launcher": launcherMenu, "power": powerMenu, "controls": controlCentre, "calendar": calendarMenu };
+        const Wanted = Menus[Name];
+
+        if (!Wanted)
+        {
+            return;
+        }
+
+        const WasOpen = Wanted.shown;
+
+        for (const Key in Menus)
+        {
+            Menus[Key].shown = false;
+        }
+
+        Wanted.shown = !WasOpen;
+    }
+
+    // Lets Waybar pills and keyboard shortcuts open the menus:  qs ipc call menus toggle launcher  (or power, controls, calendar)
     IpcHandler
     {
         target: "menus"
 
-        // The toggle function opens a menu by name, or closes it if it's already open; only one menu is open at a time
+        // The toggle function opens or closes a menu by name
         function toggle(Name: string): void
         {
-            const Menus = { "launcher": launcherMenu, "power": powerMenu, "controls": controlCentre };
-            const Wanted = Menus[Name];
-
-            if (!Wanted)
-            {
-                return;
-            }
-
-            const WasOpen = Wanted.shown;
-
-            for (const Key in Menus)
-            {
-                Menus[Key].shown = false;
-            }
-
-            Wanted.shown = !WasOpen;
+            shellRoot.toggleMenu(Name);
         }
     }
 
@@ -1274,6 +1288,13 @@ ShellRoot
 
                         if (Mouse.button === Qt.RightButton)
                         {
+                            return;
+                        }
+
+                        // The clock opens the calendar menu instead of a card
+                        if (islandWindow.currentSection === "clock" && !islandWindow.expanded)
+                        {
+                            shellRoot.toggleMenu("calendar");
                             return;
                         }
 
