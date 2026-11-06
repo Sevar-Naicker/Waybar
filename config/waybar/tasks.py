@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # This file contains the "today's task" module for the Shrine Waybar
-# Shows one unfinished task at a time from a plain text list kept in Nextcloud, so it syncs with your phone
+# Shows one unfinished task at a time from a plain text list (keep it in a synced folder like Nextcloud to edit it from your phone)
 #   no arguments  print the pill
 #   --next        scroll to the next task
 #   --previous    scroll to the previous task
@@ -9,14 +9,29 @@
 
 import html
 import json
+import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
+
+# The read_setting function asks Shrine Waybar's settings.sh for one setting, with a fallback if it can't
+def read_setting(Key, Fallback):
+    Settings = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "shrine-waybar" / "settings.sh"
+
+    try:
+        Value = subprocess.run(["bash", str(Settings), "--get", Key], capture_output=True, text=True, timeout=5).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        Value = ""
+
+    return Path(Value) if Value else Fallback
+
+
 # Section: Settings
 # One task per line. Lines starting with "x " are done, lines starting with "#" are ignored
-TasksFile = Path.home() / "Nextcloud" / "Tasks.txt"
+# The list's location comes from shrine.conf (SHRINE_TASKS_FILE)
+TasksFile = read_setting("SHRINE_TASKS_FILE", Path.home() / "Tasks.txt")
 StateFile = Path.home() / ".local" / "state" / "shrine-waybar" / "tasks.json"
 MaxPillLength = 36
 TooltipTasks = 8

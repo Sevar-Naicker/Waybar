@@ -13,6 +13,13 @@ Log_Out()
 {
     if [[ "$XDG_CURRENT_DESKTOP" == *KDE* ]]
     then
+        # gdbus comes with almost every system; qdbus is the KDE tool, under different names per distro
+        if command -v gdbus >/dev/null 2>&1 && gdbus call --session --dest org.kde.Shutdown \
+            --object-path /Shutdown --method org.kde.Shutdown.logout >/dev/null 2>&1
+        then
+            return
+        fi
+
         for QDBUS in qdbus6 qdbus-qt6 qdbus
         do
             if command -v "$QDBUS" >/dev/null 2>&1

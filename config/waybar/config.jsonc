@@ -11,11 +11,11 @@
     "spacing": 4,
 
     // Section: Module order
-    "modules-left": ["custom/launcher", "custom/dolphin", "custom/torii", "custom/brave", "tray"],
+    "modules-left": ["custom/launcher", "custom/dolphin", "custom/torii", "custom/browser", "tray"],
     // The centre is the Quickshell dynamic island (config/quickshell)
     "modules-center": [],
     // CPU, RAM, temperature and volume live in the island
-    "modules-right": ["custom/tasks", "custom/ytmusic", "custom/nightlight", "idle_inhibitor", "custom/power"],
+    "modules-right": ["custom/tasks", "custom/music", "custom/nightlight", "idle_inhibitor", "custom/power"],
 
     // Section: App shortcuts
     "custom/launcher": { 
@@ -32,13 +32,15 @@
 
     "custom/torii": { 
         "format": "⛩\ufe0e", 
-        "on-click": "setsid -f gtk-launch io.github.kolunmi.Bazaar", 
+        // Your app store (SHRINE_STORE_APP in shrine.conf: Bazaar, Discover, …)
+        "on-click": "bash ~/.config/shrine-waybar/run.sh store", 
         "tooltip": false 
     },
 
-    "custom/brave": { 
+    "custom/browser": { 
         "format": "󰖟", 
-        "on-click": "setsid -f flatpak run com.brave.Browser", 
+        // Your browser (SHRINE_BROWSER_APP in shrine.conf)
+        "on-click": "bash ~/.config/shrine-waybar/run.sh browser", 
         "tooltip": false 
     },
 
@@ -107,15 +109,17 @@
         "tooltip-format-deactivated": "Sleep allowed"
     },
 
-    // Section: YouTube Music
-    "custom/ytmusic": {
-        "format": "\uf16a ",
-        "tooltip-format": "YouTube Music",
-        "on-click": "setsid -f flatpak run app.ytmdesktop.ytmdesktop"
+    // Section: Music
+    // Your music app (SHRINE_MUSIC_APP in shrine.conf); the icon and tooltip match the app
+    "custom/music": {
+        "exec": "bash ~/.config/shrine-waybar/run.sh music-pill",
+        "return-type": "json",
+        "interval": "once",
+        "on-click": "bash ~/.config/shrine-waybar/run.sh music"
     },
 
     // Section: Today's task
-    // Unfinished tasks from ~/Nextcloud/Tasks.txt, so they sync with your phone
+    // Unfinished tasks from SHRINE_TASKS_FILE in shrine.conf (Nextcloud/Tasks.txt if you have Nextcloud)
     // Scroll to pick a task, click to mark it done, right-click to open the list
     "custom/tasks": {
         "exec": "python3 ~/.config/waybar/tasks.py",

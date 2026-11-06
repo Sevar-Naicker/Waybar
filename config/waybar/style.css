@@ -13,7 +13,7 @@ window#waybar {
 /* THE FLOATING TEMPLE PILLS */
 #clock,
 #idle_inhibitor,
-#custom-ytmusic,
+#custom-music,
 #custom-tasks,
 #custom-nightlight,
 #pulseaudio,
@@ -21,7 +21,7 @@ window#waybar {
 #custom-launcher,
 #custom-dolphin,
 #custom-torii,
-#custom-brave,
+#custom-browser,
 #custom-power,
 #custom-media,
 #custom-cava {
@@ -43,7 +43,7 @@ window#waybar {
 /* UNIVERSAL HOVER EFFECT */
 #clock:hover,
 #idle_inhibitor:hover,
-#custom-ytmusic:hover,
+#custom-music:hover,
 #custom-tasks:hover,
 #custom-nightlight:hover,
 #pulseaudio:hover,
@@ -51,7 +51,7 @@ window#waybar {
 #custom-launcher:hover,
 #custom-dolphin:hover,
 #custom-torii:hover,
-#custom-brave:hover,
+#custom-browser:hover,
 #custom-power:hover,
 #custom-media:hover,
 #custom-cava:hover {
@@ -132,7 +132,7 @@ tooltip label {
     padding: 0 14px 0 10px;
 }
 
-#custom-ytmusic {
+#custom-music {
     padding: 0 11px 0 13px;
 }
 

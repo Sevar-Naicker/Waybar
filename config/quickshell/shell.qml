@@ -158,19 +158,25 @@ ShellRoot
 
     // Section: Command pings
     // Lets the terminal tell the island a command finished:  qs ipc call island commandDone "<command>" <exit code> <seconds>
+    // Carries a finished command to every monitor's island
+    // (kept outside the IpcHandler, which only allows one-argument signals)
+    QtObject
+    {
+        id: commandRelay
+
+        signal commandFinished(string CommandText, int ExitCode, int Seconds)
+    }
+
     IpcHandler
     {
         id: islandIpc
 
         target: "island"
 
-        // Passed on to every monitor's island
-        signal commandFinished(string CommandText, int ExitCode, int Seconds)
-
         // The commandDone function is what the terminal calls
         function commandDone(CommandText: string, ExitCode: int, Seconds: int): void
         {
-            commandFinished(CommandText, ExitCode, Seconds);
+            commandRelay.commandFinished(CommandText, ExitCode, Seconds);
 
             // Check for updates again straight after an update finishes
             if (CommandText.includes("update"))
@@ -181,14 +187,16 @@ ShellRoot
     }
 
     // Section: Updates source
-    // Reads "<staged yes/no> <flatpak count>" from updates.sh at login and then hourly
+    // Reads "<restart yes/no> <system count> <app count>" from updates.sh at login and then hourly
+    // A count of -1 means it couldn't be checked on this system (the island then leaves it out)
     Process
     {
         id: updatesProcess
 
-        property bool systemStaged: false
+        property bool restartNeeded: false
+        property int systemCount: 0
         property int flatpakCount: 0
-        property bool updatesWaiting: systemStaged || flatpakCount > 0
+        property bool updatesWaiting: restartNeeded || systemCount > 0 || flatpakCount > 0
 
         // Seconds before the first check; shortened when rechecking after an update
         property int firstDelay: 30
@@ -213,14 +221,15 @@ ShellRoot
             {
                 const Parts = Line.trim().split(/\s+/);
 
-                if (Parts.length < 2)
+                if (Parts.length < 3)
                 {
                     return;
                 }
 
                 const WasWaiting = updatesProcess.updatesWaiting;
-                updatesProcess.systemStaged = Parts[0] === "yes";
-                updatesProcess.flatpakCount = parseInt(Parts[1]) || 0;
+                updatesProcess.restartNeeded = Parts[0] === "yes";
+                updatesProcess.systemCount = parseInt(Parts[1]);
+                updatesProcess.flatpakCount = parseInt(Parts[2]);
 
                 if (!WasWaiting && updatesProcess.updatesWaiting)
                 {
@@ -320,7 +329,7 @@ ShellRoot
             // Show a tick or a cross when a command run with "island" finishes
             Connections
             {
-                target: islandIpc
+                target: commandRelay
 
                 function onCommandFinished(CommandText, ExitCode, Seconds)
                 {
@@ -357,7 +366,7 @@ ShellRoot
             // The saveCopiedImage function copies a clipboard image into the Screenshots folder
             function saveCopiedImage(Path)
             {
-                Quickshell.execDetached(["sh", "-c", "mkdir -p \"$HOME/Pictures/Screenshots\" && cp \"$1\" \"$HOME/Pictures/Screenshots/\"", "sh", Path]);
+                Quickshell.execDetached(["sh", "-c", "exec bash \"$HOME/.config/shrine-waybar/run.sh\" save-image \"$1\"", "sh", Path]);
             }
 
             // The showFilePopup function pops the island out with a new file for 5 seconds
@@ -395,7 +404,7 @@ ShellRoot
             // The showInDolphin function opens Dolphin with the file highlighted
             function showInDolphin(Path)
             {
-                Quickshell.execDetached(["dolphin", "--select", Path]);
+                Quickshell.execDetached(["sh", "-c", "exec bash \"$HOME/.config/shrine-waybar/run.sh\" show-file \"$1\"", "sh", Path]);
             }
 
             // The formatBytes function turns a byte count into KB, MB or GB
@@ -556,11 +565,13 @@ ShellRoot
 
                 function onUpdatesFound()
                 {
+                    const Counts = islandWindow.countsLabel();
+
                     islandWindow.showMessagePopup({
-                        "icon": updatesProcess.systemStaged ? "\uf01e" : "\uf0ed",
+                        "icon": Counts === "" ? "\uf01e" : "\uf0ed",
                         "colour": "#E5D3B3",
-                        "title": updatesProcess.systemStaged ? "System update ready" : "Updates available",
-                        "subtitle": updatesProcess.systemStaged ? "Restart to apply · click for details" : islandWindow.flatpakLabel() + " · click for details",
+                        "title": Counts === "" ? "Restart to finish updating" : "Updates available",
+                        "subtitle": (updatesProcess.restartNeeded && Counts !== "" ? "Restart needed · " : "") + (Counts !== "" ? Counts + " · " : "") + "click for details",
                         "action": "updates"
                     });
                 }
@@ -580,34 +591,68 @@ ShellRoot
                 }
             }
 
-            // The flatpakLabel function words the Flatpak count, e.g. "1 app update" or "3 app updates"
-            function flatpakLabel()
+            // The countsLabel function words what's waiting, e.g. "3 app updates" or "12 system · 3 app updates"
+            function countsLabel()
             {
-                const Count = updatesProcess.flatpakCount;
-                return Count + (Count === 1 ? " app update" : " app updates");
+                const Parts = [];
+                let Total = 0;
+
+                if (updatesProcess.systemCount > 0)
+                {
+                    Parts.push(updatesProcess.systemCount + " system");
+                    Total += updatesProcess.systemCount;
+                }
+
+                if (updatesProcess.flatpakCount > 0)
+                {
+                    Parts.push(updatesProcess.flatpakCount + " app");
+                    Total += updatesProcess.flatpakCount;
+                }
+
+                if (Total === 0)
+                {
+                    return "";
+                }
+
+                return Parts.join(" · ") + (Total === 1 ? " update" : " updates");
             }
 
             // The updatesSummary function gives the short collapsed text for the updates section
             function updatesSummary()
             {
-                if (updatesProcess.systemStaged && updatesProcess.flatpakCount > 0)
+                const Counts = countsLabel();
+
+                if (updatesProcess.restartNeeded)
                 {
-                    return "Restart · " + flatpakLabel();
+                    return Counts === "" ? "Restart to update" : "Restart · " + Counts;
                 }
 
-                if (updatesProcess.systemStaged)
-                {
-                    return "Restart to update";
-                }
-
-                return flatpakLabel();
+                return Counts;
             }
 
-            // The runUpdate function opens kitty and runs the Bazzite update through the island ping
+            // The updateRowText function words one row of the updates card: 0 is the system, 1 is apps
+            function updateRowText(Row)
+            {
+                const Count = Row === 0 ? updatesProcess.systemCount : updatesProcess.flatpakCount;
+                const Restart = Row === 0 && updatesProcess.restartNeeded;
+
+                if (Count < 0 && !Restart)
+                {
+                    return "Not checked on this system";
+                }
+
+                if (Count > 0)
+                {
+                    return Count + " waiting" + (Restart ? " · restart needed" : "");
+                }
+
+                return Restart ? "Restart to apply" : "Up to date";
+            }
+
+            // The runUpdate function runs this system's update in a terminal; the island pings when it's done
             function runUpdate()
             {
-                Quickshell.execDetached(["kitty", "--title", "Bazzite Update", "bash", "-ic",
-                                         "island ujust update; echo; read -rp 'Press Enter to close…'"]);
+                Quickshell.execDetached(["sh", "-c", "exec bash \"$HOME/.config/shrine-waybar/run.sh\" update"]);
                 expanded = false;
             }
 
@@ -721,7 +766,7 @@ ShellRoot
             // The openSystemMonitor function launches KDE's System Monitor, independent of the island
             function openSystemMonitor()
             {
-                Quickshell.execDetached(["plasma-systemmonitor"]);
+                Quickshell.execDetached(["sh", "-c", "exec bash \"$HOME/.config/shrine-waybar/run.sh\" system-monitor"]);
                 expanded = false;
             }
 
@@ -2191,7 +2236,7 @@ ShellRoot
                             cursorShape: Qt.PointingHandCursor
                             onClicked:
                             {
-                                Quickshell.execDetached(["dolphin", downloadsProcess.downloadsFolder]);
+                                Quickshell.execDetached(["sh", "-c", "exec bash \"$HOME/.config/shrine-waybar/run.sh\" downloads-folder"]);
                                 islandWindow.expanded = false;
                             }
                         }
@@ -2497,8 +2542,8 @@ ShellRoot
                                         }
                                         else
                                         {
-                                            // The Nextcloud client's default local folder
-                                            Quickshell.execDetached(["sh", "-c", "exec dolphin \"$HOME/Nextcloud\""]);
+                                            // The folder set as SHRINE_NEXTCLOUD_DIR in shrine.conf
+                                            Quickshell.execDetached(["sh", "-c", "exec bash \"$HOME/.config/shrine-waybar/run.sh\" nextcloud-folder"]);
                                             islandWindow.expanded = false;
                                         }
                                     }
@@ -2523,7 +2568,7 @@ ShellRoot
                     Text
                     {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: updatesProcess.systemStaged ? "\uf01e" : "\uf0ed"
+                        text: islandWindow.countsLabel() === "" ? "\uf01e" : "\uf0ed"
                         color: "#E5D3B3"
                         font.family: "JetBrainsMono Nerd Font"
                         font.pixelSize: 13
@@ -2563,8 +2608,12 @@ ShellRoot
                         {
                             required property int index
 
+                            // The apps row is left out where Flatpak isn't installed
+                            property bool shown: index === 0 || updatesProcess.flatpakCount >= 0
+
                             width: updatesCard.width
-                            height: 18
+                            height: shown ? 18 : 0
+                            visible: shown
 
                             Text
                             {
@@ -2580,23 +2629,15 @@ ShellRoot
                             {
                                 anchors.right: parent.right
                                 anchors.verticalCenter: parent.verticalCenter
-                                text:
-                                {
-                                    if (index === 0)
-                                    {
-                                        return updatesProcess.systemStaged ? "Downloaded · restart to apply" : "Up to date";
-                                    }
-
-                                    return updatesProcess.flatpakCount > 0 ? islandWindow.flatpakLabel() + " waiting" : "Up to date";
-                                }
-                                color: (index === 0 ? updatesProcess.systemStaged : updatesProcess.flatpakCount > 0) ? "#ffffff" : "#86979A"
+                                text: islandWindow.updateRowText(index)
+                                color: (index === 0 ? (updatesProcess.restartNeeded || updatesProcess.systemCount > 0) : updatesProcess.flatpakCount > 0) ? "#ffffff" : "#86979A"
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 12
                             }
                         }
                     }
 
-                    // Update now, plus Restart when a system update is waiting
+                    // Update now, plus Restart when a restart is needed
                     Row
                     {
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -2604,7 +2645,7 @@ ShellRoot
 
                         Repeater
                         {
-                            model: updatesProcess.systemStaged
+                            model: updatesProcess.restartNeeded
                                    ? [{ "label": "\uf0ed  Update now", "action": "update" }, { "label": "\uf01e  Restart", "action": "restart" }]
                                    : [{ "label": "\uf0ed  Update now", "action": "update" }]
 

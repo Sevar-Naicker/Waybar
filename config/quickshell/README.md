@@ -2,7 +2,7 @@
 
 A Quickshell dynamic island that replaces the centre of the [Shrine Waybar](../../README.md). It sits level with the other Waybar pills, uses the same dark wood, blue outline and orange hover glow, and springs open into cards when clicked.
 
-Built for Bazzite (KDE Plasma, Wayland) and runs on every monitor.
+Built for KDE Plasma 6 on Wayland, on any distro, and runs on every monitor.
 
 ## What it does
 
@@ -16,7 +16,7 @@ Built for Bazzite (KDE Plasma, Wayland) and runs on every monitor.
 | Stats | CPU %, CPU and GPU temperature | CPU, GPU and RAM bars, Open System Monitor |
 | Downloads | Download speed, active count | In-progress downloads, 5 recent files, Open in Dolphin |
 | Sync | Nextcloud state | Nextcloud's status text, open client or folder |
-| Updates | Restart or app-update count | System and Flatpak status, Update now (in kitty), Restart |
+| Updates | What's waiting, or "Restart to update" | System and Flatpak status, Update now (in your terminal), Restart |
 
 Music only appears while a media player is open, Sync only while the Nextcloud client is running, and Updates only when something's waiting. The island returns to music (or the clock) after 10 seconds untouched.
 
@@ -36,7 +36,7 @@ Music only appears while a media player is open, Sync only while the Nextcloud c
 | `shell.qml` | The island itself |
 | `cava.conf` | Visualiser settings (12 bars, plain numbers out) |
 | `stats.sh` | Prints CPU, GPU and RAM readings every 2 seconds |
-| `updates.sh` | Checks for a downloaded system update and waiting Flatpak updates, at login and hourly |
+| `updates.sh` | Checks waiting updates with your system's package manager, plus Flatpak, at login and hourly |
 | `downloads.py` | Watches Downloads and Screenshots, measures download speed |
 | `clipboard.sh` | Watches the clipboard for copied images |
 | `clipboard-handler.sh` | Saves a copied image to a temporary folder |
@@ -44,7 +44,9 @@ Music only appears while a media player is open, Sync only while the Nextcloud c
 
 ## Install
 
-The repo's installer sets up the island along with Waybar and rofi. Follow the [main README](../../README.md#-install), which adds the Quickshell COPR, installs the programs and runs `./install.sh`.
+The repo's installer sets up the island along with Waybar and rofi. Follow the [main README](../../README.md#-install), which installs the programs for your system and runs `./install.sh`.
+
+The island's buttons (Update now, Open in Dolphin, the sync folder, saving copied images, System Monitor) go through `config/shrine-waybar/run.sh`, and its folders come from your `shrine.conf`. See [Settings](../../README.md#-settings).
 
 The installer:
 
@@ -78,7 +80,7 @@ Saving `shell.qml` reloads the island instantly, so edits show up without a rest
 
 **Visualiser bars stay flat** — make sure `cava` runs on its own in a terminal.
 
-**Updates never show** — run `bash ~/.config/quickshell/updates.sh 0`. It prints `yes`/`no` (system update downloaded) and the number of Flatpak updates. Bazzite downloads system updates by itself, so the island shows them once they're ready to apply on restart.
+**Updates never show** — run `bash ~/.config/quickshell/updates.sh 0`. It prints three things: `yes`/`no` (restart needed), the number of system updates, and the number of Flatpak updates (`-1` means it couldn't check). On Bazzite and other atomic systems, updates download by themselves, so the island shows them once they're ready to apply on restart. On Arch, `pacman-contrib` must be installed.
 
 **Stats show nothing for the GPU** — run `stats.sh`; a `-1` means that sensor wasn't found.
 
@@ -86,7 +88,7 @@ Saving `shell.qml` reloads the island instantly, so edits show up without a rest
 
 **Copied images don't pop up** — check `wl-paste --version`, and look in `qs log` for a "data-control" message.
 
-**Screenshots don't pop up** — the island watches `~/Pictures/Screenshots`. If Spectacle saves somewhere else, change `ScreenshotsFolder` at the top of `downloads.py`.
+**Screenshots don't pop up** — the island watches `SHRINE_SCREENSHOTS_DIR` from your `shrine.conf` (the installer reads Spectacle's save folder). If you change where Spectacle saves, update that line.
 
 ## Still to come
 

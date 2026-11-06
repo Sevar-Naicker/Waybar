@@ -3,3 +3,6 @@
 *.bak
 *~
 __pycache__/
+
+# Your own settings, made by the installer
+config/shrine-waybar/shrine.conf

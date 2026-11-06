@@ -3,13 +3,29 @@
 # Prints one JSON line every second: download speed, in-progress files, recent files and any new arrival
 
 import json
+import os
+import subprocess
 import time
 from pathlib import Path
 
+
+# The read_setting function asks Shrine Waybar's settings.sh for one setting, with a fallback if it can't
+def read_setting(Key, Fallback):
+    Settings = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "shrine-waybar" / "settings.sh"
+
+    try:
+        Value = subprocess.run(["bash", str(Settings), "--get", Key], capture_output=True, text=True, timeout=5).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        Value = ""
+
+    return Path(Value) if Value else Fallback
+
+
 # Section: Settings
+# Both folders come from shrine.conf (SHRINE_DOWNLOADS_DIR and SHRINE_SCREENSHOTS_DIR)
 Home = Path.home()
-DownloadsFolder = Home / "Downloads"
-ScreenshotsFolder = Home / "Pictures" / "Screenshots"
+DownloadsFolder = read_setting("SHRINE_DOWNLOADS_DIR", Home / "Downloads")
+ScreenshotsFolder = read_setting("SHRINE_SCREENSHOTS_DIR", Home / "Pictures" / "Screenshots")
 WatchedFolders = [DownloadsFolder, ScreenshotsFolder]
 PartialSuffixes = (".part", ".crdownload", ".download")
 ImageSuffixes = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
