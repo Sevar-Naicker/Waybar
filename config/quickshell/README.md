@@ -33,7 +33,12 @@ Music only appears while a media player is open, Sync only while the Nextcloud c
 
 | File | Purpose |
 | --- | --- |
-| `shell.qml` | The island itself |
+| `shell.qml` | The island itself, and where the menus are switched on |
+| `Theme.qml` | Colours, font and animation speed the menus share |
+| `MenuWindow.qml` | The drop-down window every menu opens in (closes on Esc or a click outside) |
+| `Launcher.qml` | App launcher, with search, a calculator and web search |
+| `Calculator.js` | Works out sums typed into the launcher |
+| `PowerMenu.qml` | Lock, sleep, log out, restart and shut down |
 | `cava.conf` | Visualiser settings (12 bars, plain numbers out) |
 | `stats.sh` | Prints CPU, GPU and RAM readings every 2 seconds |
 | `updates.sh` | Checks waiting updates with your system's package manager, plus Flatpak, at login and hourly |
@@ -69,6 +74,7 @@ The island depends on three Waybar settings, which the repo's `config/waybar/con
 | See warnings and errors | `qs log` |
 | Check the stats feed | `bash ~/.config/quickshell/stats.sh` |
 | Ping the island by hand | `qs ipc call island commandDone "test" 0 3` |
+| Open a menu from a shortcut | `qs ipc call menus toggle launcher` (or `power`) |
 | Turn off at login | System Settings → Autostart → Dynamic Island |
 | Restart the whole bar | `pkill waybar; setsid -f waybar; sleep 1; pkill -x qs; setsid -f qs` |
 

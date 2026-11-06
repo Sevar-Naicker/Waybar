@@ -247,6 +247,45 @@ ShellRoot
         onTriggered: updatesProcess.running = true
     }
 
+    // Section: Menus
+    // Each menu lives in its own file next to this one (Launcher.qml, PowerMenu.qml)
+    Launcher
+    {
+        id: launcherMenu
+    }
+
+    PowerMenu
+    {
+        id: powerMenu
+    }
+
+    // Lets Waybar pills and keyboard shortcuts open the menus:  qs ipc call menus toggle launcher
+    IpcHandler
+    {
+        target: "menus"
+
+        // The toggle function opens a menu by name, or closes it if it's already open; only one menu is open at a time
+        function toggle(Name: string): void
+        {
+            const Menus = { "launcher": launcherMenu, "power": powerMenu };
+            const Wanted = Menus[Name];
+
+            if (!Wanted)
+            {
+                return;
+            }
+
+            const WasOpen = Wanted.shown;
+
+            for (const Key in Menus)
+            {
+                Menus[Key].shown = false;
+            }
+
+            Wanted.shown = !WasOpen;
+        }
+    }
+
     // Section: Audio source
     // PipeWire only fills in a device's volume and name once something tracks it
     PwObjectTracker

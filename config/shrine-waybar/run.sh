@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # This file contains the launcher every Shrine Waybar button goes through
 # It reads settings.sh, so the same buttons open the right app or command on any system
-#   run.sh store | browser | music | music-pill | update | system-monitor
+#   run.sh store | browser | music | music-pill | update | system-monitor | in-terminal <command...>
 #   run.sh open-folder <path> | show-file <path> | save-image <path> | downloads-folder | nextcloud-folder
 
 # Section: Settings
@@ -181,6 +181,8 @@ case "${1:-}" in
     update) Update ;;
     update-run) Update_Run ;;
     system-monitor) System_Monitor ;;
+    # Runs a command in your terminal (the launcher uses this for terminal apps like btop)
+    in-terminal) shift; Run_In_Terminal "${1##*/}" "$@" ;;
     open-folder) Open_Folder "$2" ;;
     show-file) Show_File "$2" ;;
     downloads-folder) Open_Folder "$SHRINE_DOWNLOADS_DIR" ;;

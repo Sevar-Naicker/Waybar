@@ -82,8 +82,8 @@ Floating dark-wood pills · a Quickshell dynamic island · maple-red highlights 
 
 | | Feature | What it does |
 |:-:|---|---|
-| 🔍 | **App launcher** | rofi menu with a shrine header image and search |
-| 🔌 | **Power menu** | Shutdown, restart, sleep and logout in a matching theme |
+| 🔍 | **App launcher** | Drops down from the launcher pill. Type to search your apps (most-used first), arrow keys and Enter to open, a sum like `24*7` to get the answer, or anything else to search the web |
+| 🔌 | **Power menu** | Drops down from the power pill. Lock, sleep, log out, restart and shut down. The last three need a second click so you can't hit them by accident |
 | 🏝 | **Dynamic island** | Replaces the centre of the bar. Clock, music with a cava visualiser, volume, stats, downloads and Nextcloud sync, plus pop-ups for screenshots, downloads and finished commands. See [Dynamic island](#-dynamic-island) |
 | ☐ | **Today's task** | Your unfinished tasks from a plain text list, one at a time. Scroll to pick, click to tick it off, right-click to edit. With Nextcloud the list lives in `~/Nextcloud/Tasks.txt`, so you can edit it from your phone |
 | 🎵 | **Music** | Opens your music app (YTMDesktop, Spotify, …) or YouTube Music in the browser. The icon matches the app |
@@ -348,6 +348,11 @@ shrine-waybar/
 │   │   └── shrine_header.png   # Header image for both menus
 │   ├── quickshell/
 │   │   ├── shell.qml           # The dynamic island
+│   │   ├── Theme.qml           # Colours and font the menus share
+│   │   ├── MenuWindow.qml      # The drop-down window every menu opens in
+│   │   ├── Launcher.qml        # App launcher
+│   │   ├── Calculator.js       # The launcher's calculator
+│   │   ├── PowerMenu.qml       # Power menu
 │   │   ├── cava.conf           # Island visualiser settings
 │   │   ├── stats.sh            # CPU, GPU and RAM readings
 │   │   ├── updates.sh          # Waiting updates, for each system's package manager

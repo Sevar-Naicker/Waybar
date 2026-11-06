@@ -18,9 +18,10 @@
     "modules-right": ["custom/tasks", "custom/music", "custom/nightlight", "idle_inhibitor", "custom/power"],
 
     // Section: App shortcuts
+    // The launcher and power pills open the Quickshell menus, falling back to the rofi ones if the island isn't running
     "custom/launcher": { 
         "format": "󰀻", 
-        "on-click": "setsid -f bash ~/.config/rofi/launcher.sh", 
+        "on-click": "qs ipc call menus toggle launcher || setsid -f bash ~/.config/rofi/launcher.sh", 
         "tooltip": false 
     },
 
@@ -143,7 +144,7 @@
     // Section: Power
     "custom/power": { 
         "format": "⏻", 
-        "on-click": "setsid -f bash ~/.config/rofi/power-menu.sh", 
+        "on-click": "qs ipc call menus toggle power || setsid -f bash ~/.config/rofi/power-menu.sh", 
         "tooltip": false 
     }
 }
