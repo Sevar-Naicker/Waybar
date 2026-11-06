@@ -142,7 +142,8 @@ Check_Dependencies()
         Print_Warning "No supported terminal found (kitty, konsole, alacritty, foot, wezterm, xterm). The island's Update now button will open Discover instead."
     fi
 
-    if command -v fc-list >/dev/null 2>&1 && ! fc-list | grep -qi "JetBrainsMono Nerd"
+    # grep without -q reads the whole list; -q would stop early and, with pipefail, wrongly report the font missing
+    if command -v fc-list >/dev/null 2>&1 && ! fc-list : family 2>/dev/null | grep -i "JetBrainsMono Nerd" >/dev/null
     then
         Print_Warning "JetBrainsMono Nerd Font not found. Icons will show as boxes until it's installed (see README)."
     fi
@@ -221,7 +222,8 @@ Add_Island_Command()
 {
     local SOURCE_LINE="source $CONFIG_DIR/quickshell/island-command.sh"
 
-    if [ -f "$HOME/.bashrc" ] && grep -qF "$SOURCE_LINE" "$HOME/.bashrc"
+    # Matches the line however it was written (~/.config, $HOME/.config or the full path)
+    if [ -f "$HOME/.bashrc" ] && grep -q "^[[:space:]]*source .*quickshell/island-command.sh" "$HOME/.bashrc"
     then
         echo "  Already in ~/.bashrc."
         return
