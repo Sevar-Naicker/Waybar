@@ -1,3 +1,6 @@
+/* Colours come from colours.css: the Shrine palette, or your wallpaper's once you pick one (made by run.sh ensure-colours) */
+@import url("colours.css");
+
 * {
     font-family: "JetBrainsMono Nerd Font", "Font Awesome 6 Free", sans-serif;
     font-size: 13px;
@@ -25,13 +28,13 @@ window#waybar {
 #custom-power,
 #custom-media,
 #custom-cava {
-    background-color: rgba(42, 29, 17, 0.92); /* Dark Wood */
+    background-color: alpha(@bar, 0.92); /* Dark Wood */
     color: #ffffff;
     border-radius: 16px;
     margin: 4px 3px;
     padding: 0 12px;
     min-width: 20px; 
-    border: 1px solid #86979A; /* Blue Outline */
+    border: 1px solid @outline; /* Blue Outline */
     transition: 0.3s;
 }
 
@@ -55,10 +58,10 @@ window#waybar {
 #custom-power:hover,
 #custom-media:hover,
 #custom-cava:hover {
-    background-color: rgba(147, 26, 19, 0.6); 
-    border: 1px solid #E18A42; 
+    background-color: alpha(@deep, 0.6);
+    border: 1px solid @accentHover;
     color: #ffffff;
-    box-shadow: 0 0 10px rgba(225, 138, 66, 0.4);
+    box-shadow: 0 0 10px alpha(@accentHover, 0.4);
 }
 
 /* THE "MIDNIGHT CITY" JOINED PILL */
@@ -69,7 +72,7 @@ window#waybar {
 }
 
 #custom-cava {
-    color: #CB3F27; /* Maple Red bars */
+    color: @accent; /* Maple Red bars */
     border-radius: 0 16px 16px 0;
     border-left: none;
     margin-left: 0;
@@ -85,13 +88,13 @@ window#waybar {
 
 /* Ensure bars are visible and Red when playing */
 #custom-cava.playing {
-    color: #CB3F27; 
+    color: @accent; 
 }
 
 /* The Main Tooltip Box - Orange Glow */
 tooltip {
     background: rgba(20, 20, 25, 0.98); /* Slightly darker for contrast */
-    border: 2px solid #FF8C00;         /* Deep Orange Frame */
+    border: 2px solid @warm;        /* Deep Orange Frame */
     border-radius: 12px;
 }
 
@@ -100,7 +103,7 @@ tooltip label {
     font-family: "JetBrainsMono Nerd Font";
     font-size: 14px;
     padding: 12px;
-    color: #E5D3B3;                    /* Light Wood Text */
+    color: @muted;                     /* Light Wood Text */
 }
 
 #calendar {
@@ -108,23 +111,28 @@ tooltip label {
 }
 
 #calendar th {
-    color: #CB3F27;                    /* Maple Red Month Header */
+    color: @accent;                    /* Maple Red Month Header */
     font-weight: bold;
 }
 
 /* KEEP AWAKE: maple red while the screen is kept on */
 #custom-keepawake.on {
-    color: #CB3F27;
+    color: @accent;
 }
 
 /* NIGHT LIGHT: amber while the screen is warmed */
 #custom-nightlight.on {
-    color: #E18A42;
+    color: @accentHover;
+}
+
+/* NIGHT LIGHT: dimmed while it's switched off in System Settings */
+#custom-nightlight.disabled {
+    color: alpha(#ffffff, 0.45);
 }
 
 /* TODAY'S TASK: light wood when everything's done */
 #custom-tasks.empty {
-    color: #E5D3B3;
+    color: @muted;
 }
 
 /* ICON CENTRING: some Nerd Font icons sit off-centre, so these pills get uneven padding to balance them */

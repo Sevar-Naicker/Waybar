@@ -137,7 +137,9 @@
         "return-type": "json",
         "interval": 3,
         "signal": 9,
-        "on-click": "bash ~/.config/waybar/night-light.sh --toggle"
+        "on-click": "bash ~/.config/waybar/night-light.sh --toggle",
+        // Right-click opens KDE's Night Light settings
+        "on-click-right": "bash ~/.config/waybar/night-light.sh --settings"
     },
 
     // Section: Power

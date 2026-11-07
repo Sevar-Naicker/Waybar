@@ -1,0 +1,8 @@
+/* This file contains the Shrine colours Waybar starts with; run.sh copies it to colours.css, which the wallpaper picker then rewrites */
+@define-color accent #CB3F27;
+@define-color accentHover #E18A42;
+@define-color muted #E5D3B3;
+@define-color outline #86979A;
+@define-color bar #2A1D11;
+@define-color deep #931A13;
+@define-color warm #FF8C00;

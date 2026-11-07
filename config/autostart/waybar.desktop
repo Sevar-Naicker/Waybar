@@ -2,7 +2,7 @@
 Type=Application
 Name=Waybar
 Comment=Shrine Waybar setup
-Exec=waybar
+Exec=bash -c "bash ~/.config/shrine-waybar/run.sh ensure-colours; exec waybar"
 Icon=waybar
 Terminal=false
 X-KDE-autostart-phase=2

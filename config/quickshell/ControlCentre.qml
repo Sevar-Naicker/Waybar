@@ -521,7 +521,7 @@ MenuWindow
                 model: [
                     { "name": "wifi", "label": "WI-FI", "icon": "\uf1eb" },
                     { "name": "bluetooth", "label": "BLUETOOTH", "icon": "\uf294" },
-                    { "name": "night", "label": "NIGHT", "icon": "\uf186" },
+                    { "name": "night", "label": "NIGHT", "icon": "\udb83\udf65" },
                     { "name": "awake", "label": "AWAKE", "icon": "\uf0f4" }
                 ]
 

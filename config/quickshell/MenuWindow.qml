@@ -3,6 +3,7 @@
 
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Widgets
 import QtQuick
 
 // Section: Menu window
@@ -18,8 +19,16 @@ PanelWindow
     property real panelWidth: 400
     property string side: "left"
 
+    // Bare menus (the wallpaper picker) float over the desktop with no panel behind them
+    property bool bare: false
+
     // Whatever the menu puts inside goes into the panel
     default property alias content: contentArea.data
+
+    // Two extra layers a menu can move items into (set an item's parent to one):
+    // the backdrop sits behind the content and is clipped to the panel's rounded shape; the overlay covers the whole screen
+    readonly property Item backdropLayer: backdropArea
+    readonly property Item overlayLayer: overlayArea
 
     // Whether the window is on screen; it stays up after closing until the animation has finished
     // (set by hand rather than worked out from the timer, which made the window vanish and reappear for a frame)
@@ -115,8 +124,8 @@ PanelWindow
         width: menuWindow.panelWidth
         height: contentArea.childrenRect.height + 28
         radius: 20
-        color: Theme.panel
-        border.width: 1
+        color: menuWindow.bare ? "transparent" : Theme.panel
+        border.width: menuWindow.bare ? 0 : 1
         border.color: Theme.edge
 
         // Springs down from the bar when opening, shrinks back when closing
@@ -147,6 +156,23 @@ PanelWindow
 
             anchors.fill: parent
             opacity: 0.22
+            visible: !menuWindow.bare
+
+            // Repaints when a new wallpaper changes the colours
+            Connections
+            {
+                target: Theme
+
+                function onGlowAChanged()
+                {
+                    glow.requestPaint();
+                }
+
+                function onGlowBChanged()
+                {
+                    glow.requestPaint();
+                }
+            }
 
             onPaint:
             {
@@ -177,6 +203,15 @@ PanelWindow
             onHeightChanged: requestPaint()
         }
 
+        ClippingRectangle
+        {
+            id: backdropArea
+
+            anchors.fill: parent
+            radius: parent.radius
+            color: "transparent"
+        }
+
         Item
         {
             id: contentArea
@@ -186,5 +221,14 @@ PanelWindow
             width: parent.width - 28
             height: childrenRect.height
         }
+    }
+
+    // Above everything, covering the screen (the wallpaper picker grows the chosen picture here)
+    Item
+    {
+        id: overlayArea
+
+        anchors.fill: parent
+        z: 10
     }
 }

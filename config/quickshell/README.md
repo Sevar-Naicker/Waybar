@@ -11,7 +11,7 @@ Built for KDE Plasma 6 on Wayland, on any distro, and runs on every monitor.
 | Section | Collapsed | Expanded card |
 | --- | --- | --- |
 | Clock | Time (date on hover) | Click opens the calendar menu |
-| Music | Album art, title, cava visualiser (click art to pause) | Art, title, artist, seekable progress bar, controls |
+| Music | Album art, title, cava visualiser and the time, in one pill while a player is open (click art to pause) | The music half opens the music menu, the time half the calendar |
 | Volume | Level bar and percentage | Slider, mute, one-click output device switching (scroll to adjust) |
 | Stats | CPU %, CPU and GPU temperature | CPU, GPU and RAM bars, Open System Monitor |
 | Downloads | Download speed, active count | In-progress downloads, 5 recent files, Open in Dolphin |
@@ -34,22 +34,28 @@ Music only appears while a media player is open, Sync only while the Nextcloud c
 | File | Purpose |
 | --- | --- |
 | `shell.qml` | The island itself, and where the menus are switched on |
-| `Theme.qml` | Colours, font and animation speed the menus share |
+| `Theme.qml` | Colours, font and animation speed the menus and island share; loads the wallpaper colours you last picked |
+| `Palette.js` | Weighs a wallpaper's hues by how much of it they cover, turns the main one (and a second, if the wallpaper has one) into a full theme, sorts wallpapers into colour families, and writes Waybar's colours |
 | `MenuWindow.qml` | The drop-down window every menu opens in (closes on Esc or a click outside) |
 | `Launcher.qml` | App launcher, with search, a calculator and web search |
 | `Calculator.js` | Works out sums typed into the launcher |
 | `PowerMenu.qml` | Lock, sleep, log out, restart and shut down |
 | `CalendarMenu.qml` | Month (scroll or ‹ › to change it), big clock with the 3-hour forecast revolving round it (turns by itself, or scroll, use the arrow keys or click a pill), three days of weather and dials for the slot at the front |
+| `ClipboardMenu.qml` | Clipboard history (text and images): search, copy again, pin with Ctrl+P, clear. History and pins are in `~/.local/state/shrine-waybar` |
+| `clipboard-history.py` | Adds each copy to the history (newest first, at most 100, skipping secret copies); `clipboard-handler.sh` runs it |
+| `MusicMenu.qml` | Spinning album-art disc, track, seek bar, controls, and the 10-band equaliser with eight presets (through Easy Effects, output presets only) |
+| `WallpaperPicker.qml` | The slanted wallpaper strip (the chosen card always in the middle) with colour filters; picking one sweeps it in from the right, sets it on every screen and saves its colours |
+| `WallpaperColours.qml` | Reads each wallpaper's pixels on a tiny hidden canvas, so the theme comes from the colours that really cover the picture |
 | `ControlCentre.qml` | CPU, memory, GPU and temperature dials, volume and mic sliders, Wi-Fi, Bluetooth, night light and keep awake tiles |
 | `weather.py` | Fetches the weather from wttr.in every 30 minutes for the calendar menu (set `SHRINE_WEATHER_LOCATION` in shrine.conf, or leave it empty to use your connection's location) |
 | `controls.sh` | Reports Wi-Fi (NetworkManager), Bluetooth (bluetoothctl) and night light state while the control centre is open |
-| `ShellState.qml` | Keep awake: Quickshell holds the screen awake, and the Waybar coffee pill shows and switches it |
+| `ShellState.qml` | Keep awake (Quickshell holds the screen awake, and the Waybar coffee pill shows and switches it) and the equaliser's preset and band levels |
 | `cava.conf` | Visualiser settings (12 bars, plain numbers out) |
 | `stats.sh` | Prints CPU, GPU and RAM readings every 2 seconds |
 | `updates.sh` | Checks waiting updates with your system's package manager, plus Flatpak, at login and hourly |
 | `downloads.py` | Watches Downloads and Screenshots, measures download speed |
-| `clipboard.sh` | Watches the clipboard for copied images |
-| `clipboard-handler.sh` | Saves a copied image to a temporary folder |
+| `clipboard.sh` | Watches the clipboard, for image pop-ups and the clipboard history |
+| `clipboard-handler.sh` | Saves a copied image to a temporary folder, and adds every copy to the clipboard history |
 | `island-command.sh` | The `island` terminal command |
 
 ## Install
@@ -79,7 +85,7 @@ The island depends on three Waybar settings, which the repo's `config/waybar/con
 | See warnings and errors | `qs log` |
 | Check the stats feed | `bash ~/.config/quickshell/stats.sh` |
 | Ping the island by hand | `qs ipc call island commandDone "test" 0 3` |
-| Open a menu from a shortcut | `qs ipc call menus toggle launcher` (or `power`, `controls`, `calendar`) |
+| Open a menu from a shortcut | `qs ipc call menus toggle launcher` (or `power`, `controls`, `calendar`, `clipboard`, `wallpapers`, `music`) |
 | Switch keep awake | `qs ipc call controls toggleKeepAwake` |
 | Turn off at login | System Settings → Autostart → Dynamic Island |
 | Restart the whole bar | `pkill waybar; setsid -f waybar; sleep 1; pkill -x qs; setsid -f qs` |

@@ -400,14 +400,19 @@ MenuWindow
             {
                 id: orbit
 
+                // Redrawn when a new wallpaper changes the colours
+                property color lineColour: Theme.muted
+
                 anchors.fill: parent
                 opacity: 0.45
+
+                onLineColourChanged: requestPaint()
 
                 onPaint:
                 {
                     const Context = getContext("2d");
                     Context.reset();
-                    Context.strokeStyle = Theme.muted;
+                    Context.strokeStyle = lineColour;
                     Context.lineWidth = 1.5;
                     Context.setLineDash([4, 6]);
                     Context.beginPath();
@@ -726,6 +731,9 @@ MenuWindow
                                 id: dialCanvas
 
                                 property real fill: Math.max(0, Math.min(1, dial.info.fill))
+                                property color fillColour: Theme.pastel
+
+                                onFillColourChanged: requestPaint()
 
                                 Behavior on fill
                                 {
@@ -751,7 +759,7 @@ MenuWindow
 
                                     if (fill > 0)
                                     {
-                                        Context.strokeStyle = Theme.pastel;
+                                        Context.strokeStyle = fillColour;
                                         Context.beginPath();
                                         Context.arc(Middle, Middle, Middle - 3, -Math.PI / 2, -Math.PI / 2 + fill * 2 * Math.PI);
                                         Context.stroke();

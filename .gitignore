@@ -6,3 +6,6 @@ __pycache__/
 
 # Your own settings, made by the installer
 config/shrine-waybar/shrine.conf
+
+# Colours the wallpaper picker writes for Waybar (made from colours.default.css)
+config/waybar/colours.css

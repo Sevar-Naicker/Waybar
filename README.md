@@ -87,9 +87,12 @@ Floating dark-wood pills · a Quickshell dynamic island · maple-red highlights 
 | 🏝 | **Dynamic island** | Replaces the centre of the bar. Clock, music with a cava visualiser, volume, stats, downloads and Nextcloud sync, plus pop-ups for screenshots, downloads and finished commands. See [Dynamic island](#-dynamic-island) |
 | ☐ | **Today's task** | Your unfinished tasks from a plain text list, one at a time. Scroll to pick, click to tick it off, right-click to edit. With Nextcloud the list lives in `~/Nextcloud/Tasks.txt`, so you can edit it from your phone |
 | 🎵 | **Music** | Opens your music app (YTMDesktop, Spotify, …) or YouTube Music in the browser. The icon matches the app |
-| 🌙 | **Night light** | Toggles KDE's warm screen mode. Glows amber whenever the screen is warmed |
+| 🌙 | **Night light** | Toggles KDE's warm screen mode, and lights up whenever the screen is warmed. Dimmed while Night Light is switched off in System Settings (a click then opens its settings). Right-click for the settings any time |
 | ☕ | **Keep awake** | Click to stop the screen sleeping or locking. Turns maple red while on. Also in the control centre |
 | 📅 | **Calendar** | Click the island's clock. Month on the left, a big clock with the forecast revolving round it (it turns by itself; scroll or click a pill to turn it yourself), and the weather with wind, humidity, rain and feels-like dials for the slot at the front |
+| 📋 | **Clipboard** | Everything you've copied, text and images, newest first (the island keeps the last 100). Search it, click or press Enter to copy an entry again, pin the ones you keep needing (Ctrl+P), and clear the rest with two clicks. Copies a password manager marks as secret are never kept |
+| 🖼 | **Wallpaper picker** | A strip of slanted cards from `~/Pictures/Wallpapers`, the chosen one always in the middle, with colour dots to filter by. Picking one sweeps it in from the right, sets it on every screen, and fades the menus, island and bar to the colours that really cover it. The ↺ button goes back to the Shrine colours |
+| 🎚 | **Music menu** | Click the island's music. The album art spins like a record while it plays, with the track, a seek bar and controls, and a 10-band equaliser: drag the sliders or pick Flat, Bass, Treble, Vocal, Pop, Rock, Jazz or Classic. It goes through Easy Effects and only touches output presets named "Shrine …", so a mic preset you use for calls is left alone |
 | 🎛 | **Control centre** | CPU, memory, GPU and temperature dials, volume and microphone sliders, and Wi-Fi, Bluetooth, night light and keep awake tiles. Right-click Wi-Fi or Bluetooth for KDE's settings |
 | ⛩ | **Quick launch** | Dolphin, your app store (Bazaar or Discover) and your browser, one click each |
 
@@ -99,8 +102,8 @@ The centre of the bar is a [Quickshell](https://quickshell.org) island that matc
 
 | Section | Collapsed | Card |
 |---|---|---|
-| Clock | Time, date on hover | Large time and full date |
-| Music | Album art, title, visualiser. Click the art to pause | Art, artist, seekable progress bar, controls |
+| Clock | Time, date on hover | Opens the calendar menu |
+| Music | Album art, title, visualiser and the time, in one pill while a player is open. Click the art to pause | The music half opens the music menu, the time half opens the calendar |
 | Volume | Level and percentage | Slider, mute, one-click output switching. Scroll to adjust |
 | Stats | CPU %, CPU and GPU temperature | CPU, GPU and RAM bars, Open System Monitor |
 | Downloads | Download speed | In-progress files, 5 recent files, Open in Dolphin |
@@ -296,6 +299,7 @@ Your own choices live in `~/.config/shrine-waybar/shrine.conf`. The installer fi
 | `SHRINE_DOWNLOADS_DIR` | Folder the downloads section watches | `$HOME/Downloads` |
 | `SHRINE_SCREENSHOTS_DIR` | Folder screenshots pop up from, and copied images save to | `$HOME/Pictures/Screenshots` |
 | `SHRINE_WEATHER_LOCATION` | Town for the island's weather (empty uses your connection's location) | `Johannesburg` |
+| `SHRINE_WALLPAPER_DIR` | Folder the wallpaper picker shows (jpg, png and webp, plus one folder down) | `$HOME/Pictures/Wallpapers` |
 
 App settings use the app's ID, which is its `.desktop` file name without `.desktop`. `ls /usr/share/applications ~/.local/share/applications /var/lib/flatpak/exports/share/applications` lists them.
 
@@ -311,11 +315,11 @@ App settings use the app's ID, which is its `.desktop` file name without `.deskt
 | Store, browser and music apps, the update command, the terminal, and the task, downloads and screenshots folders | `~/.config/shrine-waybar/shrine.conf` (see [Settings](#-settings)) |
 | Which pills are on the bar | `modules-left` and `modules-right` in `config/waybar/config.jsonc` |
 | Calendar app | `on-click` in the `clock` block (only used if you put `clock` back in `modules-center`) |
-| Bar colours | `config/waybar/style.css` |
+| Bar, island and menu colours | Pick a wallpaper and they follow it. For your own fixed palette, edit `config/waybar/colours.default.css` and the colours at the top of `config/quickshell/Palette.js`, then press ↺ in the picker |
+| Bar pill styling | `config/waybar/style.css` |
 | Menu colours | `config/rofi/app_launcher.rasi` and `config/rofi/power.rasi` |
 | Menu header image | Replace `config/rofi/shrine_header.png` with any PNG |
 | Island sections and their order | `sectionOrder` in `config/quickshell/shell.qml` |
-| Island colours | The hex colours in `config/quickshell/shell.qml` (same palette as above) |
 
 After editing, reload the bar:
 
@@ -338,7 +342,8 @@ shrine-waybar/
 │   │   └── shrine.conf         # Your own choices (made by the installer, not in git)
 │   ├── waybar/
 │   │   ├── config.jsonc        # Bar layout and modules
-│   │   ├── style.css           # Bar colours and pill styling
+│   │   ├── style.css           # Pill styling (colours come from colours.css)
+│   │   ├── colours.default.css # The Shrine colours, copied to colours.css (the picker rewrites that, not in git)
 │   │   ├── tasks.py            # Today's task pill
 │   │   ├── night-light.sh      # Night light pill and toggle
 │   │   ├── mediaplayer.py      # Old now-playing module (not on the bar now, kept as an option)
@@ -351,16 +356,22 @@ shrine-waybar/
 │   │   └── shrine_header.png   # Header image for both menus
 │   ├── quickshell/
 │   │   ├── shell.qml           # The dynamic island
-│   │   ├── Theme.qml           # Colours and font the menus share
+│   │   ├── Theme.qml           # Colours and font the menus and island share
+│   │   ├── Palette.js          # Turns a wallpaper's colours into a theme
 │   │   ├── MenuWindow.qml      # The drop-down window every menu opens in
 │   │   ├── Launcher.qml        # App launcher
 │   │   ├── Calculator.js       # The launcher's calculator
 │   │   ├── PowerMenu.qml       # Power menu
 │   │   ├── CalendarMenu.qml    # Calendar, clock and forecast ring
 │   │   ├── ControlCentre.qml   # Control centre
+│   │   ├── ClipboardMenu.qml   # Clipboard history
+│   │   ├── clipboard-history.py # Keeps the clipboard history
+│   │   ├── MusicMenu.qml       # Music menu with the spinning disc and equaliser
+│   │   ├── WallpaperPicker.qml # Wallpaper picker
+│   │   ├── WallpaperColours.qml # Reads each wallpaper's colours
 │   │   ├── weather.py          # Weather from wttr.in for the calendar
 │   │   ├── controls.sh         # Wi-Fi, Bluetooth and night light status for the control centre
-│   │   ├── ShellState.qml      # Keep awake, shared by the coffee pill and control centre
+│   │   ├── ShellState.qml      # Keep awake and the music EQ, shared by every screen
 │   │   ├── cava.conf           # Island visualiser settings
 │   │   ├── stats.sh            # CPU, GPU and RAM readings
 │   │   ├── updates.sh          # Waiting updates, for each system's package manager

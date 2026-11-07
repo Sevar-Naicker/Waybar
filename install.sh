@@ -215,6 +215,17 @@ Check_Extras()
             Print_Warning "$FILE also starts Waybar. Remove it or you'll get two bars."
         fi
     done
+
+    # Music EQ: works through Easy Effects (output presets only; your mic presets are left alone)
+    if bash "$REPO_DIR/config/shrine-waybar/run.sh" eq-install
+    then
+        echo "  Easy Effects found: the music menu's equaliser is ready."
+    else
+        echo "  Easy Effects isn't installed, so the music menu's equaliser is greyed out. Install it (Flatpak: com.github.wwmm.easyeffects) to use it."
+    fi
+
+    # Wallpaper picker: the folder it shows
+    echo "  Wallpapers folder: $(bash "$REPO_DIR/config/shrine-waybar/run.sh" wallpaper-dir) (change SHRINE_WALLPAPER_DIR in shrine.conf)"
 }
 
 # The Add_Island_Command function loads the "island" terminal command in every new bash terminal
@@ -291,6 +302,9 @@ Link_Item "$REPO_DIR/config/autostart/dynamic-island.desktop" "$CONFIG_DIR/autos
 
 Print_Step "Creating your settings"
 Create_Settings
+
+# Waybar's colours file: the Shrine colours until you pick a wallpaper
+bash "$REPO_DIR/config/shrine-waybar/run.sh" ensure-colours
 
 Print_Step "Adding the island terminal command"
 Add_Island_Command

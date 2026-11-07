@@ -250,7 +250,7 @@ ShellRoot
     }
 
     // Section: Menus
-    // Each menu lives in its own file next to this one (Launcher.qml, PowerMenu.qml, ControlCentre.qml, CalendarMenu.qml)
+    // Each menu lives in its own file next to this one (Launcher.qml, PowerMenu.qml, ControlCentre.qml, CalendarMenu.qml, ClipboardMenu.qml, WallpaperPicker.qml)
     Launcher
     {
         id: launcherMenu
@@ -272,10 +272,25 @@ ShellRoot
         id: calendarMenu
     }
 
+    ClipboardMenu
+    {
+        id: clipboardMenu
+    }
+
+    MusicMenu
+    {
+        id: musicMenu
+    }
+
+    WallpaperPicker
+    {
+        id: wallpaperPicker
+    }
+
     // The toggleMenu function opens a menu by name, or closes it if it's already open; only one menu is open at a time
     function toggleMenu(Name)
     {
-        const Menus = { "launcher": launcherMenu, "power": powerMenu, "controls": controlCentre, "calendar": calendarMenu };
+        const Menus = { "launcher": launcherMenu, "power": powerMenu, "controls": controlCentre, "calendar": calendarMenu, "clipboard": clipboardMenu, "wallpapers": wallpaperPicker, "music": musicMenu };
         const Wanted = Menus[Name];
 
         if (!Wanted)
@@ -293,7 +308,7 @@ ShellRoot
         Wanted.shown = !WasOpen;
     }
 
-    // Lets Waybar pills and keyboard shortcuts open the menus:  qs ipc call menus toggle launcher  (or power, controls, calendar)
+    // Lets Waybar pills and keyboard shortcuts open the menus:  qs ipc call menus toggle launcher  (or power, controls, calendar, clipboard, wallpapers, music)
     IpcHandler
     {
         target: "menus"
@@ -358,8 +373,17 @@ ShellRoot
             color: "transparent"
             WlrLayershell.namespace: "dynamic-island"
 
-            // Only the pill catches clicks; the rest of the window lets them through
-            mask: Region { item: islandPill }
+            // Only the pill (and a message pop-up under it, while showing) catches clicks; the rest lets them through
+            mask: Region
+            {
+                item: islandPill
+
+                Region
+                {
+                    item: messageHitArea
+                    intersection: Intersection.Combine
+                }
+            }
 
             // Section: Island state
             property string currentSection: "clock"
@@ -373,7 +397,8 @@ ShellRoot
             // A message pop-up: { "icon", "colour", "title", "subtitle", "action" }
             property var popupMessage: null
 
-            property bool popupActive: popupFile !== null || popupMessage !== null
+            // File pop-ups take over the island; message pop-ups hang underneath it instead (see "Message pop-up")
+            property bool popupActive: popupFile !== null
 
             // Show a pop-up whenever a download finishes or a screenshot lands
             Connections
@@ -414,7 +439,7 @@ ShellRoot
 
                     islandWindow.showMessagePopup({
                         "icon": Succeeded ? "\uf058" : "\uf057",
-                        "colour": Succeeded ? "#8FBF7F" : "#CB3F27",
+                        "colour": Succeeded ? Theme.success : Theme.failure,
                         "title": CommandText,
                         "subtitle": Succeeded
                                     ? "Done in " + islandWindow.formatDuration(Seconds)
@@ -455,13 +480,37 @@ ShellRoot
                 popupTimer.restart();
             }
 
-            // The showMessagePopup function pops the island out with an icon, title and subtitle for 5 seconds
+            // The showMessagePopup function drops a message under the island (icon, title and subtitle) for 5 seconds
             function showMessagePopup(Message)
             {
-                expanded = false;
-                popupFile = null;
                 popupMessage = Message;
                 popupTimer.restart();
+            }
+
+            // The runMessageAction function does what clicking a message pop-up should, then closes it
+            function runMessageAction()
+            {
+                if (popupMessage === null)
+                {
+                    return;
+                }
+
+                if (popupMessage.action === "nextcloud")
+                {
+                    openNextcloud();
+                }
+
+                // Updates pop-up opens the updates card
+                if (popupMessage.action === "updates")
+                {
+                    dismissPopup();
+                    currentSection = "updates";
+                    expanded = true;
+                    idleTimer.restart();
+                    return;
+                }
+
+                dismissPopup();
             }
 
             // The dismissPopup function closes the pop-up and returns to the section underneath
@@ -561,7 +610,7 @@ ShellRoot
             {
                 if (syncItem === null && currentSection === "sync")
                 {
-                    currentSection = "clock";
+                    currentSection = homeSection();
                 }
             }
 
@@ -572,7 +621,7 @@ ShellRoot
                 {
                     showMessagePopup({
                         "icon": "\uf071",
-                        "colour": "#CB3F27",
+                        "colour": Theme.accent,
                         "title": "Nextcloud sync problem",
                         "subtitle": "Click to open Nextcloud",
                         "action": "nextcloud"
@@ -611,12 +660,12 @@ ShellRoot
             {
                 if (syncState === "error")
                 {
-                    return "#CB3F27";
+                    return Theme.accent;
                 }
 
                 if (syncState === "paused" || syncState === "offline")
                 {
-                    return "#86979A";
+                    return Theme.outline;
                 }
 
                 return "#ffffff";
@@ -646,7 +695,7 @@ ShellRoot
 
                     islandWindow.showMessagePopup({
                         "icon": Counts === "" ? "\uf01e" : "\uf0ed",
-                        "colour": "#E5D3B3",
+                        "colour": Theme.muted,
                         "title": Counts === "" ? "Restart to finish updating" : "Updates available",
                         "subtitle": (updatesProcess.restartNeeded && Counts !== "" ? "Restart needed · " : "") + (Counts !== "" ? Counts + " · " : "") + "click for details",
                         "action": "updates"
@@ -663,7 +712,7 @@ ShellRoot
                 {
                     if (!updatesProcess.updatesWaiting && islandWindow.currentSection === "updates")
                     {
-                        islandWindow.currentSection = "clock";
+                        islandWindow.currentSection = islandWindow.homeSection();
                     }
                 }
             }
@@ -803,7 +852,7 @@ ShellRoot
             // The tempColour function turns a temperature maple red at 80°C, matching the Waybar threshold
             function tempColour(Temp)
             {
-                return Temp >= 80 ? "#CB3F27" : "#ffffff";
+                return Temp >= 80 ? Theme.accent : "#ffffff";
             }
 
             // The statRow function returns the label, fill, colour and reading for one stats row
@@ -814,7 +863,7 @@ ShellRoot
                     return {
                         "label": "CPU",
                         "fill": statsProcess.cpuUsage / 100,
-                        "colour": "#CB3F27",
+                        "colour": Theme.accent,
                         "show": true,
                         "reading": statsProcess.cpuUsage + "%" + (statsProcess.cpuTemp >= 0 ? " · " + statsProcess.cpuTemp + "°" : "")
                     };
@@ -825,7 +874,7 @@ ShellRoot
                     return {
                         "label": "GPU",
                         "fill": statsProcess.gpuUsage / 100,
-                        "colour": "#FF8C00",
+                        "colour": Theme.warm,
                         "show": statsProcess.gpuUsage >= 0 || statsProcess.gpuTemp >= 0,
                         "reading": (statsProcess.gpuUsage >= 0 ? statsProcess.gpuUsage + "%" : "") + (statsProcess.gpuTemp >= 0 ? " · " + statsProcess.gpuTemp + "°" : "")
                     };
@@ -834,7 +883,7 @@ ShellRoot
                 return {
                     "label": "RAM",
                     "fill": statsProcess.ramTotal > 0 ? statsProcess.ramUsed / statsProcess.ramTotal : 0,
-                    "colour": "#E5D3B3",
+                    "colour": Theme.muted,
                     "show": true,
                     "reading": statsProcess.ramUsed.toFixed(1) + " / " + Math.round(statsProcess.ramTotal) + "G"
                 };
@@ -905,6 +954,12 @@ ShellRoot
                 {
                     currentSection = "clock";
                 }
+
+                // A player opening while the clock shows: move to the combined music and time view
+                if (activePlayer !== null && currentSection === "clock")
+                {
+                    currentSection = "music";
+                }
             }
 
             // The togglePlayback function plays or pauses, but only if the player allows it
@@ -918,12 +973,25 @@ ShellRoot
 
             // Section: Section logic
 
+            // The homeSection function is where the island rests: music (which shows the time too) while a player is open,
+            // otherwise the clock
+            function homeSection()
+            {
+                return activePlayer !== null ? "music" : "clock";
+            }
+
             // The isSectionAvailable function says whether a section has anything to show
             function isSectionAvailable(SectionName)
             {
                 if (SectionName === "music")
                 {
                     return activePlayer !== null;
+                }
+
+                // While music shows the time, the clock isn't a separate stop
+                if (SectionName === "clock")
+                {
+                    return activePlayer === null;
                 }
 
                 if (SectionName === "sync")
@@ -956,6 +1024,117 @@ ShellRoot
                 const Minutes = Math.floor(Whole / 60);
                 const Rest = Whole % 60;
                 return Minutes + ":" + (Rest < 10 ? "0" : "") + Rest;
+            }
+
+            // Section: Message pop-up
+            // A separate pill that slides down from under the island; the island keeps showing its section
+            Rectangle
+            {
+                id: messagePill
+
+                property bool showing: islandWindow.popupMessage !== null && islandWindow.popupFile === null
+
+                // The last message stays put while the pill slides away
+                property var message: null
+
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: islandPill.y + islandPill.height + (showing ? 8 : -6)
+                width: Math.min(460, messageRow.implicitWidth + 36)
+                height: 40
+                radius: 20
+                color: Theme.island
+                border.width: 1
+                border.color: messageHover.hovered ? Theme.accentHover : Theme.outline
+                opacity: showing ? 1 : 0
+                visible: opacity > 0
+                z: -1
+
+                Behavior on y { NumberAnimation { duration: 320; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
+                Behavior on opacity { NumberAnimation { duration: 220 } }
+                Behavior on border.color { ColorAnimation { duration: 300 } }
+
+                onShowingChanged:
+                {
+                    if (showing)
+                    {
+                        message = islandWindow.popupMessage;
+                    }
+                }
+
+                Connections
+                {
+                    target: islandWindow
+
+                    function onPopupMessageChanged()
+                    {
+                        if (islandWindow.popupMessage !== null)
+                        {
+                            messagePill.message = islandWindow.popupMessage;
+                        }
+                    }
+                }
+
+                Row
+                {
+                    id: messageRow
+
+                    anchors.centerIn: parent
+                    spacing: 10
+
+                    Text
+                    {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: messagePill.message ? messagePill.message.icon : ""
+                        color: messagePill.message ? messagePill.message.colour : "#ffffff"
+                        font.family: "JetBrainsMono Nerd Font"
+                        font.pixelSize: 16
+                    }
+
+                    Text
+                    {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.min(implicitWidth, 380)
+                        elide: Text.ElideRight
+                        textFormat: Text.StyledText
+                        text:
+                        {
+                            const Message = messagePill.message;
+
+                            if (!Message)
+                            {
+                                return "";
+                            }
+
+                            // The title in white, then the subtitle in the softer colour
+                            const Escape = Value => String(Value).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+                            return "<b>" + Escape(Message.title) + "</b>" + (Message.subtitle ? "<font color='" + Theme.muted + "'> · " + Escape(Message.subtitle) + "</font>" : "");
+                        }
+                        color: "#ffffff"
+                        font.family: "JetBrainsMono Nerd Font"
+                        font.pixelSize: 12
+                    }
+                }
+
+                HoverHandler
+                {
+                    id: messageHover
+                }
+
+                MouseArea
+                {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: islandWindow.runMessageAction()
+                }
+
+                // What the window's click area uses: the pill's size while it shows, nothing once it's gone
+                Item
+                {
+                    id: messageHitArea
+
+                    width: parent.width
+                    height: messagePill.showing ? parent.height : 0
+                }
             }
 
             // Section: Island pill
@@ -1050,9 +1229,9 @@ ShellRoot
                 // Shrine "dark wood" pill with the blue outline
                 // On hover it copies the Waybar pills: red background, orange outline, orange glow
                 // (open cards and pop-ups keep the wood background so their text stays easy to read)
-                color: islandHover.hovered && !islandWindow.expanded && !islandWindow.popupActive ? "#99931A13" : "#EB2A1D11"
+                color: islandHover.hovered && !islandWindow.expanded && !islandWindow.popupActive && islandWindow.currentSection !== "music" ? Theme.deep : Theme.island
                 border.width: 1
-                border.color: islandHover.hovered ? "#E18A42" : "#86979A"
+                border.color: islandHover.hovered ? Theme.accentHover : Theme.outline
 
                 // Same 0.3s fade as the Waybar transition
                 Behavior on color { ColorAnimation { duration: 300 } }
@@ -1065,7 +1244,7 @@ ShellRoot
                 {
                     autoPaddingEnabled: true
                     shadowEnabled: true
-                    shadowColor: "#E18A42"
+                    shadowColor: Theme.accentHover
                     shadowBlur: 0.6
                     shadowHorizontalOffset: 0
                     shadowVerticalOffset: 0
@@ -1118,7 +1297,7 @@ ShellRoot
                     interval: 5000
                     onTriggered:
                     {
-                        if (islandHover.hovered)
+                        if (islandHover.hovered || messageHover.hovered)
                         {
                             restart();
                             return;
@@ -1157,7 +1336,7 @@ ShellRoot
                         }
 
                         islandWindow.expanded = false;
-                        islandWindow.currentSection = islandWindow.musicPlaying ? "music" : "clock";
+                        islandWindow.currentSection = islandWindow.homeSection();
                     }
                 }
 
@@ -1233,28 +1412,6 @@ ShellRoot
                             return;
                         }
 
-                        // Message pop-up: click runs its action, if it has one
-                        if (islandWindow.popupMessage !== null)
-                        {
-                            if (islandWindow.popupMessage.action === "nextcloud")
-                            {
-                                islandWindow.openNextcloud();
-                            }
-
-                            // Updates pop-up opens the updates card
-                            if (islandWindow.popupMessage.action === "updates")
-                            {
-                                islandWindow.dismissPopup();
-                                islandWindow.currentSection = "updates";
-                                islandWindow.expanded = true;
-                                idleTimer.restart();
-                                return;
-                            }
-
-                            islandWindow.dismissPopup();
-                            return;
-                        }
-
                         // Copied image: click saves it, right-click opens it
                         if (islandWindow.popupActive && islandWindow.popupFile.copied)
                         {
@@ -1291,10 +1448,17 @@ ShellRoot
                             return;
                         }
 
-                        // The clock opens the calendar menu instead of a card
+                        // The clock opens the calendar menu, and music opens the music menu, instead of a card
                         if (islandWindow.currentSection === "clock" && !islandWindow.expanded)
                         {
                             shellRoot.toggleMenu("calendar");
+                            return;
+                        }
+
+                        // Music and time share the pill: the music half opens the music menu, the time half the calendar
+                        if (islandWindow.currentSection === "music" && !islandWindow.expanded)
+                        {
+                            shellRoot.toggleMenu(Mouse.x >= islandPill.timeSplit ? "calendar" : "music");
                             return;
                         }
 
@@ -1320,6 +1484,27 @@ ShellRoot
                         wheelCooldown.start();
                         islandWindow.switchSection(Wheel.angleDelta.y < 0 ? 1 : -1);
                     }
+                }
+
+                // Section: Music and time halves
+                // Where the time half starts, across the pill (the middle of the divider)
+                property real timeSplit: musicRow.x + musicDivider.x + musicDivider.width / 2
+
+                // Lights up the half under the mouse, so it's clear which one a click opens
+                Rectangle
+                {
+                    property bool onTime: islandHover.point.position.x >= islandPill.timeSplit
+
+                    visible: islandWindow.currentSection === "music" && !islandWindow.expanded && !islandWindow.popupActive && islandHover.hovered
+                    x: onTime ? islandPill.timeSplit + 1 : 3
+                    y: 3
+                    width: onTime ? islandPill.width - islandPill.timeSplit - 4 : islandPill.timeSplit - 4
+                    height: islandPill.height - 6
+                    radius: height / 2
+                    color: Theme.outlineSoft
+
+                    Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                    Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
                 }
 
                 // Section: Clock, collapsed
@@ -1365,7 +1550,7 @@ ShellRoot
                     {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Qt.formatDateTime(systemClock.date, "dddd d MMMM yyyy")
-                        color: "#E5D3B3"
+                        color: Theme.muted
                         font.family: "JetBrainsMono Nerd Font"
                         font.pixelSize: 12
                     }
@@ -1390,7 +1575,7 @@ ShellRoot
                         width: 18
                         height: 18
                         radius: 4
-                        color: "#86979A"
+                        color: Theme.outline
 
                         Image
                         {
@@ -1456,9 +1641,31 @@ ShellRoot
                                 width: 2
                                 radius: 1
                                 height: Math.max(2, (cavaProcess.levels[index] ?? 0) * 14)
-                                color: "#CB3F27"
+                                color: Theme.accent
                             }
                         }
+                    }
+
+                    // A thin divider, then the time (click this half for the calendar)
+                    Rectangle
+                    {
+                        id: musicDivider
+
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 1
+                        height: 14
+                        color: Theme.outline
+                        opacity: 0.6
+                    }
+
+                    Text
+                    {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Qt.formatDateTime(systemClock.date, "HH:mm")
+                        color: "#ffffff"
+                        font.family: "JetBrainsMono Nerd Font"
+                        font.pixelSize: 13
+                        font.bold: true
                     }
                 }
 
@@ -1484,7 +1691,7 @@ ShellRoot
                             width: 56
                             height: 56
                             radius: 8
-                            color: "#86979A"
+                            color: Theme.outline
 
                             Image
                             {
@@ -1518,7 +1725,7 @@ ShellRoot
                                 width: parent.width
                                 elide: Text.ElideRight
                                 text: islandWindow.activePlayer ? islandWindow.activePlayer.trackArtist : ""
-                                color: "#E5D3B3"
+                                color: Theme.muted
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 12
                             }
@@ -1543,7 +1750,7 @@ ShellRoot
                                     width: 3
                                     radius: 1.5
                                     height: Math.max(2, (cavaProcess.levels[index] ?? 0) * 24)
-                                    color: "#CB3F27"
+                                    color: Theme.accent
                                 }
                             }
                         }
@@ -1561,7 +1768,7 @@ ShellRoot
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
                             text: islandWindow.activePlayer ? islandWindow.formatTime(islandWindow.activePlayer.position) : "0:00"
-                            color: "#E5D3B3"
+                            color: Theme.muted
                             font.family: "JetBrainsMono Nerd Font"
                             font.pixelSize: 11
                         }
@@ -1572,7 +1779,7 @@ ShellRoot
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
                             text: islandWindow.activePlayer ? islandWindow.formatTime(islandWindow.activePlayer.length) : "0:00"
-                            color: "#E5D3B3"
+                            color: Theme.muted
                             font.family: "JetBrainsMono Nerd Font"
                             font.pixelSize: 11
                         }
@@ -1588,14 +1795,14 @@ ShellRoot
                             anchors.verticalCenter: parent.verticalCenter
                             height: 4
                             radius: 2
-                            color: "#4D86979A"
+                            color: Theme.outlineSoft
 
                             // Maple red fill to match your cava bars
                             Rectangle
                             {
                                 height: parent.height
                                 radius: 2
-                                color: "#CB3F27"
+                                color: Theme.accent
                                 width: islandWindow.activePlayer && islandWindow.activePlayer.length > 0
                                        ? parent.width * Math.min(1, islandWindow.activePlayer.position / islandWindow.activePlayer.length)
                                        : 0
@@ -1692,7 +1899,7 @@ ShellRoot
                     {
                         anchors.verticalCenter: parent.verticalCenter
                         text: islandWindow.volumeIcon()
-                        color: islandWindow.sinkMuted ? "#86979A" : "#ffffff"
+                        color: islandWindow.sinkMuted ? Theme.outline : "#ffffff"
                         font.family: "JetBrainsMono Nerd Font"
                         font.pixelSize: 13
                     }
@@ -1704,14 +1911,14 @@ ShellRoot
                         width: 46
                         height: 4
                         radius: 2
-                        color: "#4D86979A"
+                        color: Theme.outlineSoft
 
                         Rectangle
                         {
                             height: parent.height
                             radius: 2
                             width: parent.width * islandWindow.sinkVolume
-                            color: islandWindow.sinkMuted ? "#86979A" : "#CB3F27"
+                            color: islandWindow.sinkMuted ? Theme.outline : Theme.accent
                         }
                     }
 
@@ -1756,7 +1963,7 @@ ShellRoot
                             anchors.verticalCenter: parent.verticalCenter
                             width: 18
                             text: islandWindow.volumeIcon()
-                            color: islandWindow.sinkMuted ? "#86979A" : "#ffffff"
+                            color: islandWindow.sinkMuted ? Theme.outline : "#ffffff"
                             font.family: "JetBrainsMono Nerd Font"
                             font.pixelSize: 15
 
@@ -1784,7 +1991,7 @@ ShellRoot
                             width: 36
                             horizontalAlignment: Text.AlignRight
                             text: Math.round(islandWindow.sinkVolume * 100) + "%"
-                            color: "#E5D3B3"
+                            color: Theme.muted
                             font.family: "JetBrainsMono Nerd Font"
                             font.pixelSize: 12
                         }
@@ -1801,14 +2008,14 @@ ShellRoot
                             anchors.verticalCenter: parent.verticalCenter
                             height: 6
                             radius: 3
-                            color: "#4D86979A"
+                            color: Theme.outlineSoft
 
                             Rectangle
                             {
                                 height: parent.height
                                 radius: 3
                                 width: parent.width * islandWindow.sinkVolume
-                                color: islandWindow.sinkMuted ? "#86979A" : "#CB3F27"
+                                color: islandWindow.sinkMuted ? Theme.outline : Theme.accent
                             }
 
                             // Round handle at the end of the fill
@@ -1854,9 +2061,9 @@ ShellRoot
                                 width: Math.min(chipLabel.implicitWidth + 20, 260)
                                 height: 24
                                 radius: 12
-                                color: isActive ? "#E5D3B3" : "#4D86979A"
+                                color: isActive ? Theme.muted : Theme.outlineSoft
                                 border.width: 1
-                                border.color: isActive ? "#E5D3B3" : "#86979A"
+                                border.color: isActive ? Theme.muted : Theme.outline
 
                                 Text
                                 {
@@ -1866,7 +2073,7 @@ ShellRoot
                                     width: Math.min(implicitWidth, 240)
                                     elide: Text.ElideRight
                                     text: islandWindow.deviceName(modelData)
-                                    color: isActive ? "#2A1D11" : "#ffffff"
+                                    color: isActive ? Theme.bar : "#ffffff"
                                     font.family: "JetBrainsMono Nerd Font"
                                     font.pixelSize: 11
                                 }
@@ -1921,7 +2128,7 @@ ShellRoot
                         anchors.verticalCenter: parent.verticalCenter
                         visible: statsProcess.gpuTemp >= 0
                         text: "GPU " + statsProcess.gpuTemp + "°"
-                        color: statsProcess.gpuTemp >= 80 ? "#CB3F27" : "#E5D3B3"
+                        color: statsProcess.gpuTemp >= 80 ? Theme.accent : Theme.muted
                         font.family: "JetBrainsMono Nerd Font"
                         font.pixelSize: 12
                     }
@@ -1966,7 +2173,7 @@ ShellRoot
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: 36
                                 text: modelData.label
-                                color: "#E5D3B3"
+                                color: Theme.muted
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 12
                             }
@@ -1993,7 +2200,7 @@ ShellRoot
                                 anchors.verticalCenter: parent.verticalCenter
                                 height: 5
                                 radius: 2.5
-                                color: "#4D86979A"
+                                color: Theme.outlineSoft
 
                                 Rectangle
                                 {
@@ -2015,9 +2222,9 @@ ShellRoot
                         width: monitorLabel.implicitWidth + 28
                         height: 26
                         radius: 13
-                        color: monitorButtonArea.containsMouse ? "#99931A13" : "#4D86979A"
+                        color: monitorButtonArea.containsMouse ? Theme.deep : Theme.outlineSoft
                         border.width: 1
-                        border.color: monitorButtonArea.containsMouse ? "#E18A42" : "#86979A"
+                        border.color: monitorButtonArea.containsMouse ? Theme.accentHover : Theme.outline
 
                         Text
                         {
@@ -2058,7 +2265,7 @@ ShellRoot
                     {
                         anchors.verticalCenter: parent.verticalCenter
                         text: "\uf019"
-                        color: downloadsProcess.activeDownloads.length > 0 ? "#CB3F27" : "#ffffff"
+                        color: downloadsProcess.activeDownloads.length > 0 ? Theme.accent : "#ffffff"
                         font.family: "JetBrainsMono Nerd Font"
                         font.pixelSize: 13
                     }
@@ -2078,7 +2285,7 @@ ShellRoot
                         anchors.verticalCenter: parent.verticalCenter
                         visible: downloadsProcess.activeDownloads.length > 0
                         text: "· " + downloadsProcess.activeDownloads.length + " active"
-                        color: "#E5D3B3"
+                        color: Theme.muted
                         font.family: "JetBrainsMono Nerd Font"
                         font.pixelSize: 12
                     }
@@ -2121,7 +2328,7 @@ ShellRoot
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
                             text: "\uf019 " + islandWindow.formatBytes(downloadsProcess.speed) + "/s"
-                            color: "#E5D3B3"
+                            color: Theme.muted
                             font.family: "JetBrainsMono Nerd Font"
                             font.pixelSize: 12
                         }
@@ -2147,7 +2354,7 @@ ShellRoot
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: 22
                                 text: "\uf110"
-                                color: "#CB3F27"
+                                color: Theme.accent
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 13
 
@@ -2168,7 +2375,7 @@ ShellRoot
                                 anchors.right: parent.right
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: islandWindow.formatBytes(modelData.size) + " so far"
-                                color: "#E5D3B3"
+                                color: Theme.muted
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 11
                             }
@@ -2200,7 +2407,7 @@ ShellRoot
                             width: downloadsCard.width
                             height: 26
                             radius: 6
-                            color: recentArea.containsMouse ? "#4D86979A" : "transparent"
+                            color: recentArea.containsMouse ? Theme.outlineSoft : "transparent"
 
                             // Thumbnail for images, file icon for everything else
                             ClippingRectangle
@@ -2213,7 +2420,7 @@ ShellRoot
                                 width: 20
                                 height: 20
                                 radius: 4
-                                color: "#4D86979A"
+                                color: Theme.outlineSoft
 
                                 Image
                                 {
@@ -2231,7 +2438,7 @@ ShellRoot
                                     anchors.centerIn: parent
                                     visible: !modelData.image
                                     text: "\uf15b"
-                                    color: "#E5D3B3"
+                                    color: Theme.muted
                                     font.family: "JetBrainsMono Nerd Font"
                                     font.pixelSize: 11
                                 }
@@ -2245,7 +2452,7 @@ ShellRoot
                                 anchors.rightMargin: 4
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: islandWindow.formatBytes(modelData.size)
-                                color: "#E5D3B3"
+                                color: Theme.muted
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 11
                             }
@@ -2296,9 +2503,9 @@ ShellRoot
                         width: dolphinLabel.implicitWidth + 28
                         height: 26
                         radius: 13
-                        color: dolphinButtonArea.containsMouse ? "#99931A13" : "#4D86979A"
+                        color: dolphinButtonArea.containsMouse ? Theme.deep : Theme.outlineSoft
                         border.width: 1
-                        border.color: dolphinButtonArea.containsMouse ? "#E18A42" : "#86979A"
+                        border.color: dolphinButtonArea.containsMouse ? Theme.accentHover : Theme.outline
 
                         Text
                         {
@@ -2348,7 +2555,7 @@ ShellRoot
                         width: 52
                         height: 38
                         radius: 6
-                        color: "#4D86979A"
+                        color: Theme.outlineSoft
 
                         Image
                         {
@@ -2366,7 +2573,7 @@ ShellRoot
                             anchors.centerIn: parent
                             visible: islandWindow.popupFile !== null && !islandWindow.popupFile.image
                             text: "\uf15b"
-                            color: "#E5D3B3"
+                            color: Theme.muted
                             font.family: "JetBrainsMono Nerd Font"
                             font.pixelSize: 18
                         }
@@ -2407,59 +2614,7 @@ ShellRoot
                             text: islandWindow.popupFile
                                   ? (islandWindow.popupFile.copied ? "Click to save · right-click to open" : islandWindow.popupFile.name)
                                   : ""
-                            color: "#E5D3B3"
-                            font.family: "JetBrainsMono Nerd Font"
-                            font.pixelSize: 11
-                        }
-                    }
-                }
-
-                // Section: Message pop-up
-                Row
-                {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.leftMargin: 18
-                    anchors.rightMargin: 16
-                    spacing: 14
-
-                    opacity: islandWindow.popupMessage !== null ? 1 : 0
-                    visible: opacity > 0
-                    Behavior on opacity { NumberAnimation { duration: 250 } }
-
-                    Text
-                    {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: islandWindow.popupMessage ? islandWindow.popupMessage.icon : ""
-                        color: islandWindow.popupMessage ? islandWindow.popupMessage.colour : "#ffffff"
-                        font.family: "JetBrainsMono Nerd Font"
-                        font.pixelSize: 20
-                    }
-
-                    Column
-                    {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - 40
-                        spacing: 2
-
-                        Text
-                        {
-                            width: parent.width
-                            elide: Text.ElideRight
-                            text: islandWindow.popupMessage ? islandWindow.popupMessage.title : ""
-                            color: "#ffffff"
-                            font.family: "JetBrainsMono Nerd Font"
-                            font.pixelSize: 13
-                            font.bold: true
-                        }
-
-                        Text
-                        {
-                            width: parent.width
-                            elide: Text.ElideRight
-                            text: islandWindow.popupMessage ? islandWindow.popupMessage.subtitle : ""
-                            color: "#E5D3B3"
+                            color: Theme.muted
                             font.family: "JetBrainsMono Nerd Font"
                             font.pixelSize: 11
                         }
@@ -2568,7 +2723,7 @@ ShellRoot
                                 maximumLineCount: 2
                                 elide: Text.ElideRight
                                 text: islandWindow.syncText !== "" ? islandWindow.syncText : "Nextcloud"
-                                color: "#E5D3B3"
+                                color: Theme.muted
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 11
                             }
@@ -2596,9 +2751,9 @@ ShellRoot
                                 width: syncButtonLabel.implicitWidth + 24
                                 height: 26
                                 radius: 13
-                                color: syncButtonArea.containsMouse ? "#99931A13" : "#4D86979A"
+                                color: syncButtonArea.containsMouse ? Theme.deep : Theme.outlineSoft
                                 border.width: 1
-                                border.color: syncButtonArea.containsMouse ? "#E18A42" : "#86979A"
+                                border.color: syncButtonArea.containsMouse ? Theme.accentHover : Theme.outline
 
                                 Text
                                 {
@@ -2653,7 +2808,7 @@ ShellRoot
                     {
                         anchors.verticalCenter: parent.verticalCenter
                         text: islandWindow.countsLabel() === "" ? "\uf01e" : "\uf0ed"
-                        color: "#E5D3B3"
+                        color: Theme.muted
                         font.family: "JetBrainsMono Nerd Font"
                         font.pixelSize: 13
                     }
@@ -2704,7 +2859,7 @@ ShellRoot
                                 anchors.left: parent.left
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: index === 0 ? "System" : "Apps"
-                                color: "#E5D3B3"
+                                color: Theme.muted
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 12
                             }
@@ -2714,7 +2869,7 @@ ShellRoot
                                 anchors.right: parent.right
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: islandWindow.updateRowText(index)
-                                color: (index === 0 ? (updatesProcess.restartNeeded || updatesProcess.systemCount > 0) : updatesProcess.flatpakCount > 0) ? "#ffffff" : "#86979A"
+                                color: (index === 0 ? (updatesProcess.restartNeeded || updatesProcess.systemCount > 0) : updatesProcess.flatpakCount > 0) ? "#ffffff" : Theme.outline
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 12
                             }
@@ -2740,9 +2895,9 @@ ShellRoot
                                 width: updatesButtonLabel.implicitWidth + 24
                                 height: 26
                                 radius: 13
-                                color: updatesButtonArea.containsMouse ? "#99931A13" : "#4D86979A"
+                                color: updatesButtonArea.containsMouse ? Theme.deep : Theme.outlineSoft
                                 border.width: 1
-                                border.color: updatesButtonArea.containsMouse ? "#E18A42" : "#86979A"
+                                border.color: updatesButtonArea.containsMouse ? Theme.accentHover : Theme.outline
 
                                 Text
                                 {
