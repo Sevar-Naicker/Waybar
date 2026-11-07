@@ -242,6 +242,8 @@ Set_Wallpaper()
         Image="$Safe"
     fi
 
+    [ "$SHRINE_LOCK_WALLPAPER" = 1 ] && Set_Lock_Wallpaper "$Image"
+
     if Has plasma-apply-wallpaperimage
     then
         plasma-apply-wallpaperimage "$Image" >/dev/null 2>&1 && return 0
@@ -250,6 +252,26 @@ Set_Wallpaper()
     # Older Plasma without that command: ask the desktop directly (the name is plain by now, so no escaping needed)
     gdbus call --session --dest org.kde.plasmashell --object-path /PlasmaShell --method org.kde.PlasmaShell.evaluateScript \
         "for (const Desk of desktops()) { Desk.wallpaperPlugin = 'org.kde.image'; Desk.currentConfigGroup = ['Wallpaper', 'org.kde.image', 'General']; Desk.writeConfig('Image', 'file://$Image'); }" >/dev/null 2>&1
+}
+
+# The Set_Lock_Wallpaper function puts the same picture on KDE's lock screen (it reads this the next time the screen locks)
+Set_Lock_Wallpaper()
+{
+    local Write
+
+    if Has kwriteconfig6
+    then
+        Write=kwriteconfig6
+    elif Has kwriteconfig5
+    then
+        Write=kwriteconfig5
+    else
+        return 1
+    fi
+
+    "$Write" --file kscreenlockerrc --group Greeter --key WallpaperPlugin org.kde.image
+    "$Write" --file kscreenlockerrc --group Greeter --group Wallpaper --group org.kde.image --group General --key Image "file://$1"
+    "$Write" --file kscreenlockerrc --group Greeter --group Wallpaper --group org.kde.image --group General --key PreviewImage "file://$1"
 }
 
 # The Wallpaper_List function prints the wallpaper folder, then every image in it (and one folder down), sorted by name

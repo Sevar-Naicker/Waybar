@@ -19,7 +19,7 @@ ShrineKeys=(
     SHRINE_SYSTEM SHRINE_UPDATE_COMMAND SHRINE_TERMINAL
     SHRINE_STORE_APP SHRINE_BROWSER_APP SHRINE_MUSIC_APP SHRINE_MUSIC_URL
     SHRINE_TASKS_FILE SHRINE_NEXTCLOUD_DIR SHRINE_DOWNLOADS_DIR SHRINE_SCREENSHOTS_DIR
-    SHRINE_WEATHER_LOCATION SHRINE_WALLPAPER_DIR
+    SHRINE_WEATHER_LOCATION SHRINE_WALLPAPER_DIR SHRINE_LOCK_WALLPAPER
 )
 
 # The Os_Release_Field function reads one field (like ID or ID_LIKE) from os-release
@@ -231,6 +231,7 @@ fi
 : "${SHRINE_SCREENSHOTS_DIR=$(Default_Screenshots_Dir)}"
 : "${SHRINE_WEATHER_LOCATION=}"
 : "${SHRINE_WALLPAPER_DIR=$(User_Dir PICTURES Pictures)/Wallpapers}"
+: "${SHRINE_LOCK_WALLPAPER=1}"
 
 if [ -z "${SHRINE_TASKS_FILE+set}" ]
 then
@@ -304,6 +305,8 @@ SHRINE_WEATHER_LOCATION=$(Q "$SHRINE_WEATHER_LOCATION")
 # Section: Wallpapers
 # Folder the wallpaper picker shows (jpg, png and webp)
 SHRINE_WALLPAPER_DIR=$(Q "$SHRINE_WALLPAPER_DIR")
+# 1 puts the picked wallpaper on the lock screen too, 0 leaves the lock screen alone
+SHRINE_LOCK_WALLPAPER=$(Q "$SHRINE_LOCK_WALLPAPER")
 EOF
 
     echo "  Created $ShrineConf"

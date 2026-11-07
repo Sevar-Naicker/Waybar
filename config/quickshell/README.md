@@ -44,7 +44,7 @@ Music only appears while a media player is open, Sync only while the Nextcloud c
 | `ClipboardMenu.qml` | Clipboard history (text and images): search, copy again, pin with Ctrl+P, clear. History and pins are in `~/.local/state/shrine-waybar` |
 | `clipboard-history.py` | Adds each copy to the history (newest first, at most 100, skipping secret copies); `clipboard-handler.sh` runs it |
 | `MusicMenu.qml` | Spinning album-art disc, track, seek bar, controls, and the 10-band equaliser with eight presets (through Easy Effects, output presets only) |
-| `WallpaperPicker.qml` | The slanted wallpaper strip (the chosen card always in the middle) with colour filters; picking one sweeps it in from the right, sets it on every screen and saves its colours |
+| `WallpaperPicker.qml` | The slanted wallpaper strip (the chosen card always in the middle) with colour filters; picking one sweeps it in from the right, sets it on every screen and the lock screen, and saves its colours |
 | `WallpaperColours.qml` | Reads each wallpaper's pixels on a tiny hidden canvas, so the theme comes from the colours that really cover the picture |
 | `ControlCentre.qml` | CPU, memory, GPU and temperature dials, volume and mic sliders, Wi-Fi, Bluetooth, night light and keep awake tiles |
 | `weather.py` | Fetches the weather from wttr.in every 30 minutes for the calendar menu (set `SHRINE_WEATHER_LOCATION` in shrine.conf, or leave it empty to use your connection's location) |
