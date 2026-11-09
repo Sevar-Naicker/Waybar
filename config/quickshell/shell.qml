@@ -250,10 +250,12 @@ ShellRoot
     }
 
     // Section: Menus
-    // Each menu lives in its own file next to this one (Launcher.qml, PowerMenu.qml, ControlCentre.qml, CalendarMenu.qml, ClipboardMenu.qml, WallpaperPicker.qml)
+    // Each menu lives in its own file next to this one (Launcher.qml, PowerMenu.qml, ControlCentre.qml, CalendarMenu.qml, ClipboardMenu.qml, WallpaperPicker.qml, MusicMenu.qml, FocusMenu.qml)
     Launcher
     {
         id: launcherMenu
+
+        onOpenMenu: (Name) => shellRoot.toggleMenu(Name)
     }
 
     PowerMenu
@@ -287,10 +289,15 @@ ShellRoot
         id: wallpaperPicker
     }
 
+    FocusMenu
+    {
+        id: focusMenu
+    }
+
     // The toggleMenu function opens a menu by name, or closes it if it's already open; only one menu is open at a time
     function toggleMenu(Name)
     {
-        const Menus = { "launcher": launcherMenu, "power": powerMenu, "controls": controlCentre, "calendar": calendarMenu, "clipboard": clipboardMenu, "wallpapers": wallpaperPicker, "music": musicMenu };
+        const Menus = { "launcher": launcherMenu, "power": powerMenu, "controls": controlCentre, "calendar": calendarMenu, "clipboard": clipboardMenu, "wallpapers": wallpaperPicker, "music": musicMenu, "focus": focusMenu };
         const Wanted = Menus[Name];
 
         if (!Wanted)
@@ -308,7 +315,7 @@ ShellRoot
         Wanted.shown = !WasOpen;
     }
 
-    // Lets Waybar pills and keyboard shortcuts open the menus:  qs ipc call menus toggle launcher  (or power, controls, calendar, clipboard, wallpapers, music)
+    // Lets Waybar pills and keyboard shortcuts open the menus:  qs ipc call menus toggle launcher  (or power, controls, calendar, clipboard, wallpapers, music, focus)
     IpcHandler
     {
         target: "menus"
@@ -980,6 +987,38 @@ ShellRoot
                 return activePlayer !== null ? "music" : "clock";
             }
 
+            // Section: Focus countdown
+            // While the focus timer is on (running or paused), the time in the island shows its countdown instead
+            property bool focusShown: ShellState.focusPhase !== "idle"
+
+            // The timeText function is the island's time: the countdown with an hourglass while focusing, otherwise HH:mm
+            function timeText()
+            {
+                return focusShown ? " " + ShellState.focusClock() : Qt.formatDateTime(systemClock.date, "HH:mm");
+            }
+
+            // The timeColour function colours the countdown: accent for focus, green for a break, dimmed while paused
+            function timeColour()
+            {
+                if (!focusShown)
+                {
+                    return "#ffffff";
+                }
+
+                if (!ShellState.focusRunning)
+                {
+                    return Theme.muted;
+                }
+
+                return ShellState.focusPhase === "focus" ? Theme.accent : Theme.success;
+            }
+
+            // The timeMenu function is which menu the time opens: the focus timer while it's on, otherwise the calendar
+            function timeMenu()
+            {
+                return focusShown ? "focus" : "calendar";
+            }
+
             // The isSectionAvailable function says whether a section has anything to show
             function isSectionAvailable(SectionName)
             {
@@ -1448,17 +1487,17 @@ ShellRoot
                             return;
                         }
 
-                        // The clock opens the calendar menu, and music opens the music menu, instead of a card
+                        // The clock opens the calendar menu (or the focus timer while it's counting), instead of a card
                         if (islandWindow.currentSection === "clock" && !islandWindow.expanded)
                         {
-                            shellRoot.toggleMenu("calendar");
+                            shellRoot.toggleMenu(islandWindow.timeMenu());
                             return;
                         }
 
-                        // Music and time share the pill: the music half opens the music menu, the time half the calendar
+                        // Music and time share the pill: the music half opens the music menu, the time half the calendar (or focus timer)
                         if (islandWindow.currentSection === "music" && !islandWindow.expanded)
                         {
-                            shellRoot.toggleMenu(Mouse.x >= islandPill.timeSplit ? "calendar" : "music");
+                            shellRoot.toggleMenu(Mouse.x >= islandPill.timeSplit ? islandWindow.timeMenu() : "music");
                             return;
                         }
 
@@ -1513,10 +1552,10 @@ ShellRoot
                     id: clockLabel
 
                     anchors.centerIn: parent
-                    text: islandHover.hovered
-                          ? Qt.formatDateTime(systemClock.date, "ddd d MMM")
-                          : Qt.formatDateTime(systemClock.date, "HH:mm")
-                    color: "#ffffff"
+                    text: islandWindow.focusShown
+                          ? islandWindow.timeText()
+                          : (islandHover.hovered ? Qt.formatDateTime(systemClock.date, "ddd d MMM") : Qt.formatDateTime(systemClock.date, "HH:mm"))
+                    color: islandWindow.timeColour()
                     font.family: "JetBrainsMono Nerd Font"
                     font.pixelSize: 13
                     font.bold: true
@@ -1661,8 +1700,8 @@ ShellRoot
                     Text
                     {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: Qt.formatDateTime(systemClock.date, "HH:mm")
-                        color: "#ffffff"
+                        text: islandWindow.timeText()
+                        color: islandWindow.timeColour()
                         font.family: "JetBrainsMono Nerd Font"
                         font.pixelSize: 13
                         font.bold: true

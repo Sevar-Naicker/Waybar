@@ -37,19 +37,21 @@ Music only appears while a media player is open, Sync only while the Nextcloud c
 | `Theme.qml` | Colours, font and animation speed the menus and island share; loads the wallpaper colours you last picked |
 | `Palette.js` | Weighs a wallpaper's hues by how much of it they cover, turns the main one (and a second, if the wallpaper has one) into a full theme, sorts wallpapers into colour families, and writes Waybar's colours |
 | `MenuWindow.qml` | The drop-down window every menu opens in (closes on Esc or a click outside) |
-| `Launcher.qml` | App launcher, with search, a calculator and web search |
+| `Launcher.qml` | App launcher, with search, a calculator, web search, and a row of quick buttons that open the other menus, take a screenshot or lock the screen |
 | `Calculator.js` | Works out sums typed into the launcher |
 | `PowerMenu.qml` | Lock, sleep, log out, restart and shut down |
 | `CalendarMenu.qml` | Month (scroll or ‹ › to change it), big clock with the 3-hour forecast revolving round it (turns by itself, or scroll, use the arrow keys or click a pill), three days of weather and dials for the slot at the front |
 | `ClipboardMenu.qml` | Clipboard history (text and images): search, copy again, pin with Ctrl+P, clear. History and pins are in `~/.local/state/shrine-waybar` |
 | `clipboard-history.py` | Adds each copy to the history (newest first, at most 100, skipping secret copies); `clipboard-handler.sh` runs it |
 | `MusicMenu.qml` | Spinning album-art disc, track, seek bar, controls, and the 10-band equaliser with eight presets (through Easy Effects, output presets only) |
+| `FocusMenu.qml` | The focus timer: countdown ring, start/pause, skip and reset, the focus, break and long break lengths, the silence switch and today's total |
+| `focus-quiet.py` | Holds notifications back while a focus round runs, through the notification server's Inhibit call; KDE lets them through again when it stops |
 | `WallpaperPicker.qml` | The slanted wallpaper strip (the chosen card always in the middle) with colour filters; picking one sweeps it in from the right, sets it on every screen and the lock screen, and saves its colours |
 | `WallpaperColours.qml` | Reads each wallpaper's pixels on a tiny hidden canvas, so the theme comes from the colours that really cover the picture |
 | `ControlCentre.qml` | CPU, memory, GPU and temperature dials, volume and mic sliders, Wi-Fi, Bluetooth, night light and keep awake tiles |
 | `weather.py` | Fetches the weather from wttr.in every 30 minutes for the calendar menu (set `SHRINE_WEATHER_LOCATION` in shrine.conf, or leave it empty to use your connection's location) |
 | `controls.sh` | Reports Wi-Fi (NetworkManager), Bluetooth (bluetoothctl) and night light state while the control centre is open |
-| `ShellState.qml` | Keep awake (Quickshell holds the screen awake, and the Waybar coffee pill shows and switches it) and the equaliser's preset and band levels |
+| `ShellState.qml` | Keep awake (Quickshell holds the screen awake, and the Waybar coffee pill shows and switches it), the equaliser's preset and band levels, and the focus timer (so it keeps running while its menu is closed; lengths and today's total are in `~/.local/state/shrine-waybar/focus.json`) |
 | `cava.conf` | Visualiser settings (12 bars, plain numbers out) |
 | `stats.sh` | Prints CPU, GPU and RAM readings every 2 seconds |
 | `updates.sh` | Checks waiting updates with your system's package manager, plus Flatpak, at login and hourly |
@@ -85,7 +87,7 @@ The island depends on three Waybar settings, which the repo's `config/waybar/con
 | See warnings and errors | `qs log` |
 | Check the stats feed | `bash ~/.config/quickshell/stats.sh` |
 | Ping the island by hand | `qs ipc call island commandDone "test" 0 3` |
-| Open a menu from a shortcut | `qs ipc call menus toggle launcher` (or `power`, `controls`, `calendar`, `clipboard`, `wallpapers`, `music`) |
+| Open a menu from a shortcut | `qs ipc call menus toggle launcher` (or `power`, `controls`, `calendar`, `clipboard`, `wallpapers`, `music`, `focus`) |
 | Switch keep awake | `qs ipc call controls toggleKeepAwake` |
 | Turn off at login | System Settings → Autostart → Dynamic Island |
 | Restart the whole bar | `pkill waybar; setsid -f waybar; sleep 1; pkill -x qs; setsid -f qs` |

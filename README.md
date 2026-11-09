@@ -82,7 +82,7 @@ Floating dark-wood pills · a Quickshell dynamic island · maple-red highlights 
 
 | | Feature | What it does |
 |:-:|---|---|
-| 🔍 | **App launcher** | Drops down from the launcher pill. Type to search your apps (most-used first), arrow keys and Enter to open, a sum like `24*7` to get the answer, or anything else to search the web |
+| 🔍 | **App launcher** | Drops down from the launcher pill. Type to search your apps (most-used first), arrow keys and Enter to open, a sum like `24*7` to get the answer, or anything else to search the web. A row of quick buttons under the search box opens the wallpaper, clipboard, music, focus, calendar, control and power menus, takes a screenshot or locks the screen |
 | 🔌 | **Power menu** | Drops down from the power pill. Lock, sleep, log out, restart and shut down. The last three need a second click so you can't hit them by accident |
 | 🏝 | **Dynamic island** | Replaces the centre of the bar. Clock, music with a cava visualiser, volume, stats, downloads and Nextcloud sync, plus pop-ups for screenshots, downloads and finished commands. See [Dynamic island](#-dynamic-island) |
 | ☐ | **Today's task** | Your unfinished tasks from a plain text list, one at a time. Scroll to pick, click to tick it off, right-click to edit. With Nextcloud the list lives in `~/Nextcloud/Tasks.txt`, so you can edit it from your phone |
@@ -93,6 +93,7 @@ Floating dark-wood pills · a Quickshell dynamic island · maple-red highlights 
 | 📋 | **Clipboard** | Everything you've copied, text and images, newest first (the island keeps the last 100). Search it, click or press Enter to copy an entry again, pin the ones you keep needing (Ctrl+P), and clear the rest with two clicks. Copies a password manager marks as secret are never kept |
 | 🖼 | **Wallpaper picker** | A strip of slanted cards from `~/Pictures/Wallpapers`, the chosen one always in the middle, with colour dots to filter by. Picking one sweeps it in from the right, sets it on every screen and the lock screen, and fades the menus, island and bar to the colours that really cover it. The ↺ button goes back to the Shrine colours |
 | 🎚 | **Music menu** | Click the island's music. The album art spins like a record while it plays, with the track, a seek bar and controls, and a 10-band equaliser: drag the sliders or pick Flat, Bass, Treble, Vocal, Pop, Rock, Jazz or Classic. It goes through Easy Effects and only touches output presets named "Shrine …", so a mic preset you use for calls is left alone |
+| ⏳ | **Focus timer** | Pomodoro rounds: 25 minutes of focus, a 5 minute break, and a 15 minute break after every fourth round (change any of them). A ring counts down, the island shows the countdown in place of the time, and notifications are held back while you focus. Space starts or pauses, S skips, R resets. Keeps today's total |
 | 🎛 | **Control centre** | CPU, memory, GPU and temperature dials, volume and microphone sliders, and Wi-Fi, Bluetooth, night light and keep awake tiles. Right-click Wi-Fi or Bluetooth for KDE's settings |
 | ⛩ | **Quick launch** | Dolphin, your app store (Bazaar or Discover) and your browser, one click each |
 
@@ -102,8 +103,8 @@ The centre of the bar is a [Quickshell](https://quickshell.org) island that matc
 
 | Section | Collapsed | Card |
 |---|---|---|
-| Clock | Time, date on hover | Opens the calendar menu |
-| Music | Album art, title, visualiser and the time, in one pill while a player is open. Click the art to pause | The music half opens the music menu, the time half opens the calendar |
+| Clock | Time, date on hover. While the focus timer is on, its countdown instead | Opens the calendar menu (or the focus timer while it's on) |
+| Music | Album art, title, visualiser and the time, in one pill while a player is open. Click the art to pause | The music half opens the music menu, the time half opens the calendar (or the focus timer while it's on) |
 | Volume | Level and percentage | Slider, mute, one-click output switching. Scroll to adjust |
 | Stats | CPU %, CPU and GPU temperature | CPU, GPU and RAM bars, Open System Monitor |
 | Downloads | Download speed | In-progress files, 5 recent files, Open in Dolphin |
@@ -119,6 +120,32 @@ island <any command>   # pops a tick or a cross, with how long it took
 ```
 
 Everything lives in `config/quickshell/`. Its [README](config/quickshell/README.md) covers each file and fixes for common problems.
+
+## ✦ Keyboard shortcuts
+
+Every menu opens from a command, so you can give each one a key. In **System Settings → Keyboard → Shortcuts**, click **Add New → Command or Script**, paste the command, then set the key.
+
+| Menu | Command | Suggested key |
+|---|---|---|
+| Launcher | `qs ipc call menus toggle launcher` | Meta |
+| Clipboard | `qs ipc call menus toggle clipboard` | Meta+Alt+V |
+| Wallpapers | `qs ipc call menus toggle wallpapers` | Meta+Alt+W |
+| Music | `qs ipc call menus toggle music` | Meta+Alt+M |
+| Focus timer | `qs ipc call menus toggle focus` | Meta+Alt+F |
+| Calendar | `qs ipc call menus toggle calendar` | Meta+Alt+C |
+| Control centre | `qs ipc call menus toggle controls` | Meta+Alt+A |
+| Power | `qs ipc call menus toggle power` | Meta+Alt+P |
+| Keep awake | `qs ipc call controls toggleKeepAwake` | Meta+Alt+K |
+
+Pressing the same key again closes the menu, and Esc or a click outside closes any of them. The suggested keys use Meta+Alt so they stay clear of KDE's own Meta shortcuts and of tiling scripts like Krohnkite (which uses Meta+F, Meta+M and others). If KDE says a key is already taken, click Cancel and pick another rather than replacing it.
+
+> [!TIP]
+> To open the launcher with Meta on its own, KDE has to stop using Meta for its own app menu. Run this once, then set the shortcut:
+>
+> ```bash
+> kwriteconfig6 --file kwinrc --group ModifierOnlyShortcuts --key Meta ""
+> qdbus org.kde.KWin /KWin reconfigure
+> ```
 
 ## ✦ Palette
 
@@ -156,6 +183,8 @@ Other systems still work. Their updates section just stays hidden, and **Update 
 | `cava` | The island's audio visualiser |
 | `python3` | The island's downloads watcher and the today's task pill (usually already installed) |
 | `gdbus` | Night light, the restart prompt and logout (usually already installed, from `glib2`) |
+| `python3-gobject` | Holding notifications back during focus rounds (usually already installed). Without it the focus timer still works |
+| `libnotify` | `notify-send`, for the focus timer's end-of-round notification (usually already installed) |
 | `pacman-contrib` | Arch-based systems only: lets the updates section count updates |
 | A terminal | For the island's Update now button: kitty, konsole, alacritty, foot, wezterm or xterm |
 | [JetBrainsMono Nerd Font](https://www.nerdfonts.com/font-downloads) | All the icons |

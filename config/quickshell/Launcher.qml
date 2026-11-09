@@ -1,5 +1,6 @@
 // This file contains the app launcher that drops down from the launcher pill
 // Type to search your apps, use the arrow keys and Enter, or type a sum like 24*7 to get the answer
+// The quick buttons under the search box open the other menus, take a screenshot or lock the screen
 
 import Quickshell
 import Quickshell.Io
@@ -26,6 +27,22 @@ MenuWindow
 
     // Every app that should show in a launcher
     property var allApps: DesktopEntries.applications.values.filter(App => !App.noDisplay)
+
+    // Asks the shell to open another menu (the quick buttons use it)
+    signal openMenu(string Name)
+
+    // The quick buttons along the top: menus open in place of the launcher, the rest run a command
+    readonly property var quickButtons: [
+        { "label": "Wallpapers", "icon": "\uf03e", "menu": "wallpapers" },
+        { "label": "Clipboard", "icon": "\uf0ea", "menu": "clipboard" },
+        { "label": "Music", "icon": "\uf001", "menu": "music" },
+        { "label": "Focus", "icon": "\uf252", "menu": "focus" },
+        { "label": "Calendar", "icon": "\uf073", "menu": "calendar" },
+        { "label": "Controls", "icon": "\uf1de", "menu": "controls" },
+        { "label": "Screenshot", "icon": "\udb83\ude51", "command": "sleep 0.4; spectacle -r" },
+        { "label": "Lock", "icon": "\uf023", "command": "loginctl lock-session" },
+        { "label": "Power", "icon": "\uf011", "menu": "power" }
+    ]
 
     // The apps matching the search, best match first
     property var results:
@@ -153,6 +170,19 @@ MenuWindow
         }
     }
 
+    // The useQuickButton function opens that button's menu, or closes the launcher and runs its command
+    function useQuickButton(Button)
+    {
+        if (Button.menu)
+        {
+            openMenu(Button.menu);
+            return;
+        }
+
+        closeMenu();
+        Quickshell.execDetached(["sh", "-c", Button.command]);
+    }
+
     // Section: Saved usage
     // Reads how often each app has been opened (one line of JSON)
     Process
@@ -277,6 +307,94 @@ MenuWindow
                     opacity: 0.7
                     font.family: Theme.font
                     font.pixelSize: 13
+                }
+            }
+        }
+
+        // Section: Quick buttons
+        // One tap opens another menu, takes a screenshot or locks the screen; the name shows while hovering
+        Row
+        {
+            id: quickRow
+
+            // Above the rows below it, so a button's name can hang over them
+            z: 1
+            width: parent.width
+            spacing: 6
+
+            Repeater
+            {
+                model: launcher.quickButtons
+
+                Rectangle
+                {
+                    id: quickButton
+
+                    required property var modelData
+
+                    width: (quickRow.width - quickRow.spacing * (launcher.quickButtons.length - 1)) / launcher.quickButtons.length
+                    height: 40
+                    radius: 12
+                    color: quickHover.containsMouse ? Theme.pastel : Theme.card
+                    border.width: 1
+                    border.color: quickHover.containsMouse ? "transparent" : Theme.cardBorder
+                    z: quickHover.containsMouse ? 2 : 0
+
+                    Behavior on color
+                    {
+                        ColorAnimation { duration: 120 }
+                    }
+
+                    Text
+                    {
+                        anchors.centerIn: parent
+                        text: quickButton.modelData.icon
+                        color: quickHover.containsMouse ? Theme.pastelText : Theme.text
+                        font.family: Theme.font
+                        font.pixelSize: 14
+                    }
+
+                    // The name, just under the button
+                    Rectangle
+                    {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.top: parent.bottom
+                        anchors.topMargin: 5
+                        width: quickLabel.implicitWidth + 14
+                        height: 20
+                        radius: 6
+                        color: Theme.panel
+                        border.width: 1
+                        border.color: Theme.cardBorder
+                        opacity: quickHover.containsMouse ? 1 : 0
+                        visible: opacity > 0
+
+                        Behavior on opacity
+                        {
+                            NumberAnimation { duration: 120 }
+                        }
+
+                        Text
+                        {
+                            id: quickLabel
+
+                            anchors.centerIn: parent
+                            text: quickButton.modelData.label
+                            color: Theme.text
+                            font.family: Theme.font
+                            font.pixelSize: 10
+                        }
+                    }
+
+                    MouseArea
+                    {
+                        id: quickHover
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: launcher.useQuickButton(quickButton.modelData)
+                    }
                 }
             }
         }
