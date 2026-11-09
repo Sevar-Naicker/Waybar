@@ -1,6 +1,6 @@
 # Dynamic Island
 
-A Quickshell dynamic island that replaces the centre of the [Shrine Waybar](../../README.md). It sits level with the other Waybar pills, uses the same dark wood, blue outline and orange hover glow, and springs open into cards when clicked.
+A Quickshell dynamic island that replaces the centre of the [Ukishima](../../README.md) bar. It sits level with the other Waybar pills, uses the same dark wood, blue outline and orange hover glow, and springs open into cards when clicked.
 
 Built for KDE Plasma 6 on Wayland, on any distro, and runs on every monitor.
 

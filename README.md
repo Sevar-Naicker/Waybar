@@ -1,20 +1,22 @@
 <div align="center">
 
-# ⛩ Shrine Waybar
+# 浮島 Ukishima
 
-**A warm, autumn-shrine Waybar + rofi setup for KDE Plasma, on any KDE distro**
+**A Waybar with a floating dynamic island and Quickshell menus for KDE Plasma, coloured by your wallpaper**
 
-Floating dark-wood pills · a Quickshell dynamic island · maple-red highlights · themed menus
+<sub><i>Ukishima (浮島) means "floating island"</i></sub>
+
+Floating pills · a dynamic island · launcher, music, calendar, wallpaper and focus menus · any KDE distro
 
 ![KDE Plasma](https://img.shields.io/badge/KDE_Plasma-Wayland-1D99F3?style=for-the-badge&logo=kde&logoColor=white)
 ![Any KDE distro](https://img.shields.io/badge/Bazzite_%C2%B7_Fedora_%C2%B7_Arch_%C2%B7_Kubuntu_%C2%B7_openSUSE-8A2BE2?style=for-the-badge&logo=linux&logoColor=white)
 ![Waybar](https://img.shields.io/badge/Waybar-2A1D11?style=for-the-badge)
-![rofi](https://img.shields.io/badge/rofi-CB3F27?style=for-the-badge)
+![Quickshell](https://img.shields.io/badge/Quickshell-CB3F27?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-E18A42?style=for-the-badge)
 
 <br>
 
-<img src="screenshots/desktop.png" alt="Shrine Waybar desktop" width="100%">
+<img src="screenshots/desktop.png" alt="Ukishima desktop" width="100%">
 
 <br><br>
 
@@ -173,6 +175,8 @@ Pressing the same key again closes the menu, and Esc or a click outside closes a
 > ```
 
 ## ✦ Palette
+
+The starting colours, called the Shrine palette. Picking a wallpaper swaps them for colours from it, and ↺ in the wallpaper picker brings these back.
 
 | | Colour | Hex | Used for |
 |:-:|---|---|---|
@@ -337,6 +341,9 @@ Otherwise you'll have two bars. Right-click the KDE panel and choose **Show Pane
 - click **Delete Panel**, to rely fully on Waybar
 
 ## ✦ Settings
+
+> [!NOTE]
+> Ukishima started out as Shrine Waybar, so its folders, scripts and settings still use the shrine name: `~/.config/shrine-waybar`, `shrine.conf` and the `SHRINE_…` settings below.
 
 Your own choices live in `~/.config/shrine-waybar/shrine.conf`. The installer fills it in for your system. It's yours, so it's never committed to git or overwritten by an update. Change a line and reload Waybar, or delete a line to go back to the automatic choice.
 
