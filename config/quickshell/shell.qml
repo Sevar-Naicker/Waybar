@@ -373,8 +373,8 @@ ShellRoot
             // Sit over Waybar instead of being pushed below it
             exclusionMode: ExclusionMode.Ignore
 
-            // Leave room for the island to grow when expanded
-            implicitWidth: 420
+            // Leave room for the island to grow when expanded, and for long messages under it (only the pills catch clicks)
+            implicitWidth: 520
             implicitHeight: 240
 
             color: "transparent"
@@ -1078,7 +1078,7 @@ ShellRoot
 
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: islandPill.y + islandPill.height + (showing ? 8 : -6)
-                width: Math.min(460, messageRow.implicitWidth + 36)
+                width: Math.min(islandWindow.width - 20, messageRow.implicitWidth + 36)
                 height: 40
                 radius: 20
                 color: Theme.island
@@ -1132,7 +1132,7 @@ ShellRoot
                     Text
                     {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: Math.min(implicitWidth, 380)
+                        width: Math.min(implicitWidth, islandWindow.width - 92)
                         elide: Text.ElideRight
                         textFormat: Text.StyledText
                         text:

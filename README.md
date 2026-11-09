@@ -18,11 +18,11 @@ Floating dark-wood pills · a Quickshell dynamic island · maple-red highlights 
 
 <br><br>
 
-<img src="screenshots/bar.png" alt="The bar" width="100%">
+<img src="screenshots/bar.gif" alt="The bar, with the music visualiser moving in the island" width="100%">
 
 <br><br>
 
-<img src="screenshots/island-demo.gif" alt="The dynamic island switching between music, clock, volume, stats, downloads and sync" width="760">
+<img src="screenshots/island-demo.gif" alt="The dynamic island opening its downloads, music, volume and stats cards" width="600">
 
 <sub>The dynamic island: drag or scroll to switch sections, click to open a card</sub>
 
@@ -32,14 +32,39 @@ Floating dark-wood pills · a Quickshell dynamic island · maple-red highlights 
 
 ## ✦ Gallery
 
+### Menus
+
 <table>
   <tr>
     <th align="center">App launcher</th>
     <th align="center">Power menu</th>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/launcher.png" alt="App launcher" width="400"></td>
-    <td align="center"><img src="screenshots/power-menu.png" alt="Power menu" width="400"></td>
+    <td align="center"><img src="screenshots/launcher.png" alt="App launcher with quick buttons and most-used apps" width="420"></td>
+    <td align="center"><img src="screenshots/power-menu.png" alt="Power menu with lock, sleep, log out, restart and shut down" width="420"></td>
+  </tr>
+  <tr>
+    <th align="center" colspan="2">Calendar and weather</th>
+  </tr>
+  <tr>
+    <td align="center" colspan="2"><img src="screenshots/calendar.png" alt="Calendar with the month, a big clock circled by the forecast, and today's weather" width="840"></td>
+  </tr>
+  <tr>
+    <th align="center">Music and equaliser</th>
+    <th align="center">Focus timer</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/music-menu.png" alt="Music menu with a spinning album-art disc, controls and a 10-band equaliser" width="420"></td>
+    <td align="center"><img src="screenshots/focus-timer.png" alt="Focus timer counting down, with its countdown in the island" width="330"></td>
+  </tr>
+  <tr>
+    <th align="center" colspan="2">Wallpaper picker</th>
+  </tr>
+  <tr>
+    <td align="center" colspan="2"><img src="screenshots/wallpaper-picker.png" alt="Wallpaper picker with slanted cards and colour filters" width="840"></td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2"><img src="screenshots/wallpaper-wipe.gif" alt="Picking a wallpaper sweeps it in from the right while the bar and island change colour" width="720"><br><sub>Picking a wallpaper sweeps it in, and the bar, island and menus take its colours</sub></td>
   </tr>
 </table>
 
@@ -68,13 +93,13 @@ Floating dark-wood pills · a Quickshell dynamic island · maple-red highlights 
   </tr>
   <tr>
     <th align="center">Updates waiting</th>
-    <th align="center">Command finished <sub>(<code>island ujust update</code>)</sub></th>
-    <th></th>
+    <th align="center">Command finished <sub>(<code>island sleep 3</code>)</sub></th>
+    <th align="center">Command failed <sub>(<code>island false</code>)</sub></th>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/island-updates.png" alt="Pop-up saying 5 app updates are available" width="260"></td>
-    <td align="center"><img src="screenshots/island-ping.png" alt="Pop-up with a tick saying ujust update finished in 7 minutes 36 seconds" width="260"></td>
-    <td></td>
+    <td align="center"><img src="screenshots/island-updates.png" alt="Message under the island saying 5 app updates are available" width="290"></td>
+    <td align="center"><img src="screenshots/island-ping.png" alt="Message under the island with a tick saying sleep 3 was done in 3 seconds" width="200"></td>
+    <td align="center"><img src="screenshots/island-failed.png" alt="Message under the island with a cross saying false failed" width="250"></td>
   </tr>
 </table>
 

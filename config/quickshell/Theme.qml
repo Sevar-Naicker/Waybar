@@ -63,103 +63,126 @@ Singleton
     // A new wallpaper fades every colour across instead of switching in one jump (as long as the picker's wipe takes)
     readonly property int fadeDuration: 1100
 
+    // Colours only fade once the saved theme has loaded, so starting Quickshell doesn't flash the Shrine colours first
+    property bool fading: false
+
     Behavior on panel
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
     Behavior on outline
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
     Behavior on outlineSoft
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
     Behavior on pastel
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
     Behavior on pastelText
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
     Behavior on glowA
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
     Behavior on glowB
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
     Behavior on accent
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
     Behavior on accentHover
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
     Behavior on text
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
     Behavior on muted
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
     Behavior on accentText
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
     Behavior on soft
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
     Behavior on softHover
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
     Behavior on bar
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
     Behavior on island
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
     Behavior on deep
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
     Behavior on success
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
     Behavior on failure
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
     Behavior on warm
     {
+        enabled: theme.fading
         ColorAnimation { duration: theme.fadeDuration; easing.type: Easing.InOutQuad }
     }
 
@@ -212,6 +235,9 @@ Singleton
     {
         command: ["cat", Quickshell.env("HOME") + "/.local/state/shrine-waybar/theme.json"]
         running: true
+
+        // Turn fading on once the saved colours are in (or there were none)
+        onExited: Qt.callLater(() => theme.fading = true)
 
         stdout: SplitParser
         {
