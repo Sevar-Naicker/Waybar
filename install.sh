@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-# This file contains the installer: it works out which system it's on, checks dependencies, backs up existing configs,
+# This file contains the installer: it works out which system it's on, installs missing programs (after asking), backs up existing configs,
 # symlinks this repo's configs (Waybar, rofi, the dynamic island and shared settings) into ~/.config and creates your shrine.conf
+#   ./install.sh            asks before installing anything
+#   ./install.sh --yes      installs missing programs without asking
+#   ./install.sh --no-install   only lists what's missing and the command to install it
 
 set -euo pipefail
 
@@ -8,6 +11,24 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 BACKUP_DIR="$HOME/.config-backup/shrine-waybar-$(date +%Y%m%d-%H%M%S)"
+
+# Section: Options
+INSTALL_MODE="ask"
+
+for ARGUMENT in "$@"
+do
+    case "$ARGUMENT" in
+        --yes|-y) INSTALL_MODE="yes" ;;
+        --no-install) INSTALL_MODE="no" ;;
+        *) echo "Unknown option: $ARGUMENT (use --yes or --no-install)"; exit 1 ;;
+    esac
+done
+
+# Without a terminal to answer in, nothing gets installed unless --yes was given
+if [ "$INSTALL_MODE" = "ask" ] && [ ! -t 0 ]
+then
+    INSTALL_MODE="no"
+fi
 
 # Section: System
 # settings.sh works out the system family (atomic, fedora, arch, debian, opensuse or unknown) and the default apps
@@ -34,6 +55,13 @@ then
     DEPENDENCIES+=("checkupdates:pacman-contrib")
 fi
 
+# Extras (check:package): everything works without them, but these features need them
+#   python-gobject holds notifications back during focus rounds, libnotify sends the focus timer's notifications
+EXTRAS=(
+    "python-gobject:python-gobject"
+    "notify-send:libnotify"
+)
+
 # The Print_Step function prints a coloured heading for each install step
 Print_Step()
 {
@@ -53,8 +81,80 @@ Package_Name()
         arch:python3) echo "python" ;;
         debian:glib2) echo "libglib2.0-bin" ;;
         opensuse:glib2) echo "glib2-tools" ;;
+        atomic:python-gobject|fedora:python-gobject|opensuse:python-gobject) echo "python3-gobject" ;;
+        debian:python-gobject) echo "python3-gi" ;;
+        debian:libnotify) echo "libnotify-bin" ;;
+        opensuse:libnotify) echo "libnotify-tools" ;;
         *) echo "$1" ;;
     esac
+}
+
+# The Is_Present function checks one dependency (most are a command; PyGObject is a Python module)
+Is_Present()
+{
+    case "$1" in
+        python-gobject) python3 -c "import gi" >/dev/null 2>&1 ;;
+        *) command -v "$1" >/dev/null 2>&1 ;;
+    esac
+}
+
+# The Ask function asks a yes/no question (Enter means yes), or answers by itself with --yes or --no-install
+Ask()
+{
+    local ANSWER
+
+    case "$INSTALL_MODE" in
+        yes) return 0 ;;
+        no) return 1 ;;
+    esac
+
+    printf '  %s [Y/n] ' "$1"
+    read -r ANSWER || return 1
+    [[ -z "$ANSWER" || "$ANSWER" =~ ^[Yy] ]]
+}
+
+# The Install_Packages function installs packages with this system's package manager (it asks for your password)
+Install_Packages()
+{
+    case "$SHRINE_SYSTEM" in
+        fedora) sudo dnf install -y "$@" ;;
+        arch) sudo pacman -S --needed --noconfirm "$@" ;;
+        debian) sudo apt install -y "$@" ;;
+        opensuse) sudo zypper --non-interactive install "$@" ;;
+        *) return 1 ;;
+    esac
+}
+
+# The Install_Font function puts JetBrainsMono Nerd Font in your own fonts folder (no password needed)
+Install_Font()
+{
+    local FONT_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/fonts/JetBrainsMonoNerd"
+    local TEMP_ZIP
+
+    if [ "$SHRINE_SYSTEM" = "arch" ]
+    then
+        sudo pacman -S --needed --noconfirm ttf-jetbrains-mono-nerd && return 0
+    fi
+
+    if ! command -v curl >/dev/null 2>&1 || ! command -v unzip >/dev/null 2>&1
+    then
+        Print_Warning "curl and unzip are needed to download the font."
+        return 1
+    fi
+
+    TEMP_ZIP="$(mktemp --suffix=.zip)"
+
+    if curl -fLo "$TEMP_ZIP" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
+    then
+        mkdir -p "$FONT_DIR"
+        unzip -oq "$TEMP_ZIP" -d "$FONT_DIR"
+        rm -f "$TEMP_ZIP"
+        fc-cache -f "$FONT_DIR" >/dev/null 2>&1 || true
+        return 0
+    fi
+
+    rm -f "$TEMP_ZIP"
+    return 1
 }
 
 # The Print_Install_Command function prints how to install packages on this system
@@ -75,7 +175,7 @@ Print_Quickshell_Help()
 {
     case "$SHRINE_SYSTEM" in
         atomic)
-            echo "    Quickshell comes from a COPR. Add it before the command above (see README, Install step 1):"
+            echo "    Quickshell comes from a COPR. Add it before the command above:"
             echo '      sudo curl -Lo /etc/yum.repos.d/quickshell.repo \'
             echo '        "https://copr.fedorainfracloud.org/coprs/errornointernet/quickshell/repo/fedora-$(rpm -E %fedora)/errornointernet-quickshell-fedora-$(rpm -E %fedora).repo"'
             ;;
@@ -92,60 +192,106 @@ Print_Quickshell_Help()
     esac
 }
 
-# The Check_Dependencies function lists missing programs and fonts, and the command to install them on this system
+# The Check_Dependencies function finds missing programs and the font, then offers to install them
+# (Bazzite and other atomic systems get the command instead: adding packages there needs a restart, so it's your call)
 Check_Dependencies()
 {
     local MISSING=()
+    local MISSING_EXTRAS=()
     local NEEDS_QUICKSHELL=0
+    local NEEDS_FONT=0
     local ENTRY
     local PACKAGE
+    local CAN_INSTALL=0
 
     for ENTRY in "${DEPENDENCIES[@]}"
     do
-        if ! command -v "${ENTRY%%:*}" >/dev/null 2>&1
-        then
-            PACKAGE="$(Package_Name "${ENTRY##*:}")"
+        Is_Present "${ENTRY%%:*}" && continue
 
-            # Quickshell is only in the normal repos on some systems, so it gets its own advice
-            if [ "$PACKAGE" = "quickshell" ]
-            then
-                NEEDS_QUICKSHELL=1
-                case "$SHRINE_SYSTEM" in
-                    atomic|fedora|arch) MISSING+=("$PACKAGE") ;;
-                esac
-            else
-                MISSING+=("$PACKAGE")
-            fi
+        PACKAGE="$(Package_Name "${ENTRY##*:}")"
+
+        # Quickshell is only in the normal repos on some systems, so it gets its own advice
+        if [ "$PACKAGE" = "quickshell" ]
+        then
+            NEEDS_QUICKSHELL=1
+            case "$SHRINE_SYSTEM" in
+                atomic|fedora|arch) MISSING+=("$PACKAGE") ;;
+            esac
+        else
+            MISSING+=("$PACKAGE")
         fi
     done
 
-    if [ ${#MISSING[@]} -eq 0 ] && [ $NEEDS_QUICKSHELL -eq 0 ]
+    for ENTRY in "${EXTRAS[@]}"
+    do
+        Is_Present "${ENTRY%%:*}" || MISSING_EXTRAS+=("$(Package_Name "${ENTRY##*:}")")
+    done
+
+    # grep without -q reads the whole list; -q would stop early and, with pipefail, wrongly report the font missing
+    if command -v fc-list >/dev/null 2>&1 && ! fc-list : family 2>/dev/null | grep -i "JetBrainsMono Nerd" >/dev/null
+    then
+        NEEDS_FONT=1
+    fi
+
+    if [ ${#MISSING[@]} -eq 0 ] && [ $NEEDS_QUICKSHELL -eq 0 ] && [ ${#MISSING_EXTRAS[@]} -eq 0 ] && [ $NEEDS_FONT -eq 0 ]
     then
         echo "  All programs found."
     else
-        if [ ${#MISSING[@]} -gt 0 ]
+        [ ${#MISSING[@]} -gt 0 ] && Print_Warning "Missing: ${MISSING[*]}"
+        [ $NEEDS_QUICKSHELL -eq 1 ] && [[ " ${MISSING[*]} " != *" quickshell "* ]] && Print_Warning "Missing: quickshell"
+        [ ${#MISSING_EXTRAS[@]} -gt 0 ] && echo "  Missing extras (focus timer notifications): ${MISSING_EXTRAS[*]}"
+        [ $NEEDS_FONT -eq 1 ] && Print_Warning "Missing: JetBrainsMono Nerd Font (icons show as boxes without it)"
+
+        case "$SHRINE_SYSTEM" in
+            fedora|arch) CAN_INSTALL=1 ;;
+            debian|opensuse) [ $NEEDS_QUICKSHELL -eq 0 ] && CAN_INSTALL=1 ;;
+        esac
+
+        # Programs: installed here after asking, or the command to run yourself
+        if [ $((${#MISSING[@]} + ${#MISSING_EXTRAS[@]})) -gt 0 ] || [ $NEEDS_QUICKSHELL -eq 1 ]
         then
-            Print_Warning "Missing: ${MISSING[*]}"
-            echo "    Install them with:"
-            Print_Install_Command "${MISSING[@]}"
+            if [ $CAN_INSTALL -eq 1 ] && Ask "Install the missing programs now? (asks for your password)"
+            then
+                # Fedora gets Quickshell from a COPR, so that's switched on first
+                if [ "$SHRINE_SYSTEM" = "fedora" ] && [ $NEEDS_QUICKSHELL -eq 1 ]
+                then
+                    sudo dnf copr enable -y errornointernet/quickshell || Print_Warning "Couldn't enable the Quickshell COPR."
+                fi
+
+                if Install_Packages "${MISSING[@]}" "${MISSING_EXTRAS[@]}"
+                then
+                    echo "  Programs installed."
+                else
+                    Print_Warning "Installing didn't finish. Run this yourself:"
+                    Print_Install_Command "${MISSING[@]}" "${MISSING_EXTRAS[@]}"
+                fi
+            else
+                echo "    Install them with:"
+                Print_Install_Command "${MISSING[@]}" "${MISSING_EXTRAS[@]}"
+                [ $NEEDS_QUICKSHELL -eq 1 ] && Print_Quickshell_Help
+            fi
         fi
 
-        if [ $NEEDS_QUICKSHELL -eq 1 ]
+        # The font goes in your own fonts folder, so it works the same on every system
+        if [ $NEEDS_FONT -eq 1 ]
         then
-            [ ${#MISSING[@]} -eq 0 ] && Print_Warning "Missing: quickshell"
-            Print_Quickshell_Help
+            if Ask "Install JetBrainsMono Nerd Font now?"
+            then
+                if Install_Font
+                then
+                    echo "  Font installed."
+                else
+                    Print_Warning "Couldn't install the font. See the README (Install section, 'Rather install the programs yourself?')."
+                fi
+            else
+                echo "    See the README (Install section, 'Rather install the programs yourself?') to install it yourself."
+            fi
         fi
     fi
 
     if [ -z "$SHRINE_TERMINAL" ]
     then
         Print_Warning "No supported terminal found (kitty, konsole, alacritty, foot, wezterm, xterm). The island's Update now button will open Discover instead."
-    fi
-
-    # grep without -q reads the whole list; -q would stop early and, with pipefail, wrongly report the font missing
-    if command -v fc-list >/dev/null 2>&1 && ! fc-list : family 2>/dev/null | grep -i "JetBrainsMono Nerd" >/dev/null
-    then
-        Print_Warning "JetBrainsMono Nerd Font not found. Icons will show as boxes until it's installed (see README)."
     fi
 }
 
@@ -221,7 +367,21 @@ Check_Extras()
     then
         echo "  Easy Effects found: the music menu's equaliser is ready."
     else
-        echo "  Easy Effects isn't installed, so the music menu's equaliser is greyed out. Install it (Flatpak: com.github.wwmm.easyeffects) to use it."
+        echo "  Easy Effects isn't installed, so the music menu's equaliser is greyed out."
+
+        if Ask "Install Easy Effects now?"
+        then
+            # Arch and the other non-atomic systems use their own package; Bazzite and the rest get the Flatpak
+            if { [ "$SHRINE_SYSTEM" != "atomic" ] && Install_Packages easyeffects; } ||
+               { command -v flatpak >/dev/null 2>&1 && flatpak install -y flathub com.github.wwmm.easyeffects; }
+            then
+                echo "  Easy Effects installed: the equaliser is ready."
+            else
+                Print_Warning "Couldn't install Easy Effects. Install it from your app store instead."
+            fi
+        else
+            echo "    Install it (Flatpak: com.github.wwmm.easyeffects) to use the equaliser."
+        fi
     fi
 
     # Wallpaper picker: the folder it shows
@@ -276,7 +436,7 @@ Restart_Waybar()
 }
 
 # Section: Run
-echo "Shrine Waybar installer"
+echo "Ukishima installer"
 echo "Repo: $REPO_DIR"
 echo "System: ${SYSTEM_NAME:-unknown} (family: $SHRINE_SYSTEM)"
 

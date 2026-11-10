@@ -223,12 +223,44 @@ Other systems still work. Their updates section just stays hidden, and **Update 
 
 ## ✦ Install
 
-### 1. Install the programs
+### 1. Clone the repo
 
-Pick your system. The installer in step 4 also tells you exactly what's still missing.
+```bash
+git clone https://github.com/Sevar-Naicker/Waybar.git ~/shrine-waybar
+cd ~/shrine-waybar
+```
 
-<details open>
-<summary><b>Bazzite and other Fedora Atomic systems</b></summary>
+> [!IMPORTANT]
+> Keep this folder where it is. Your configs will point into it, so moving or deleting it breaks the bar.
+
+### 2. Run the installer
+
+```bash
+./install.sh
+```
+
+The installer:
+
+1. Works out which system you're on
+2. Finds any missing programs, the font and Easy Effects, and **offers to install them for you** (it asks first, and needs your password). On Bazzite and other atomic systems it prints the command instead, because adding packages there needs a restart
+3. Moves any existing `~/.config/waybar`, `~/.config/rofi`, `~/.config/quickshell`, `~/.config/shrine-waybar` and autostart entries into `~/.config-backup/`
+4. Symlinks the repo's configs into `~/.config`
+5. Creates your `shrine.conf` with the apps and folders it found, and shows them (see [Settings](#-settings))
+6. Adds the `island` command to `~/.bashrc`
+7. Restarts Waybar, then the dynamic island
+
+Use `./install.sh --yes` to install everything without being asked, or `./install.sh --no-install` to only see what's missing.
+
+> [!TIP]
+> Because the configs are symlinked, any edit in `~/shrine-waybar/config/` takes effect live, and you can commit it straight to git.
+
+<details>
+<summary><b>Rather install the programs yourself?</b> Commands for each system</summary>
+
+<br>
+
+<details>
+<summary>Bazzite and other Fedora Atomic systems</summary>
 
 Packages are layered with `rpm-ostree`, not `dnf`. Quickshell comes from a COPR, so add it first:
 
@@ -245,7 +277,7 @@ If it complains a package is already installed, remove that one from the list an
 </details>
 
 <details>
-<summary><b>Fedora KDE</b></summary>
+<summary>Fedora KDE</summary>
 
 ```bash
 sudo dnf copr enable errornointernet/quickshell
@@ -255,7 +287,7 @@ sudo dnf install waybar rofi cava quickshell wl-clipboard
 </details>
 
 <details>
-<summary><b>CachyOS, EndeavourOS, Manjaro and Arch</b></summary>
+<summary>CachyOS, EndeavourOS, Manjaro and Arch</summary>
 
 Quickshell is in the official repos:
 
@@ -266,7 +298,7 @@ sudo pacman -S --needed waybar rofi cava quickshell wl-clipboard pacman-contrib
 </details>
 
 <details>
-<summary><b>Kubuntu, KDE neon and Debian</b></summary>
+<summary>Kubuntu, KDE neon and Debian</summary>
 
 ```bash
 sudo apt install waybar rofi cava wl-clipboard
@@ -277,7 +309,7 @@ Quickshell isn't in the Debian or Ubuntu repos. Install it using the [Quickshell
 </details>
 
 <details>
-<summary><b>openSUSE Tumbleweed and Leap</b></summary>
+<summary>openSUSE Tumbleweed and Leap</summary>
 
 ```bash
 sudo zypper install waybar rofi cava wl-clipboard
@@ -287,15 +319,8 @@ Quickshell isn't in the main openSUSE repos. Install it using the [Quickshell in
 
 </details>
 
-Optional apps for the buttons, on any system with Flatpak:
 
-```bash
-flatpak install flathub com.brave.Browser              # Browser pill
-flatpak install flathub app.ytmdesktop.ytmdesktop      # Music pill
-flatpak install flathub org.gnome.Evolution            # Only for the optional Waybar clock module
-```
-
-### 2. Install the font
+The font:
 
 ```bash
 mkdir -p ~/.local/share/fonts/JetBrainsMonoNerd
@@ -304,34 +329,21 @@ unzip -o /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/JetBrainsMonoNerd
 fc-cache -f
 ```
 
-### 3. Clone the repo
+</details>
+
+### 3. Optional apps
+
+For the buttons, on any system with Flatpak:
 
 ```bash
-git clone https://github.com/Sevar-Naicker/Waybar.git ~/shrine-waybar
-cd ~/shrine-waybar
+flatpak install flathub com.brave.Browser              # Browser pill
+flatpak install flathub app.ytmdesktop.ytmdesktop      # Music pill
+flatpak install flathub org.gnome.Evolution            # Only for the optional Waybar clock module
 ```
 
-> [!IMPORTANT]
-> Keep this folder where it is. Your configs will point into it, so moving or deleting it breaks the bar.
+### 4. Bazzite only: restart after layering
 
-### 4. Run the installer
-
-```bash
-./install.sh
-```
-
-The installer:
-
-1. Works out which system you're on
-2. Checks for missing programs and the font, and prints the command to install them on your system
-3. Moves any existing `~/.config/waybar`, `~/.config/rofi`, `~/.config/quickshell`, `~/.config/shrine-waybar` and autostart entries into `~/.config-backup/`
-4. Symlinks the repo's configs into `~/.config`
-5. Creates your `shrine.conf` with the apps and folders it found, and shows them (see [Settings](#-settings))
-6. Adds the `island` command to `~/.bashrc`
-7. Restarts Waybar, then the dynamic island
-
-> [!TIP]
-> Because the configs are symlinked, any edit in `~/shrine-waybar/config/` takes effect live, and you can commit it straight to git.
+If the installer printed an `rpm-ostree install` command, run it, restart, then run `./install.sh` once more.
 
 ### 5. Hide the KDE panel
 
@@ -454,7 +466,7 @@ shrine-waybar/
 <details>
 <summary><b>🛠 Troubleshooting</b></summary>
 
-- **Icons show as boxes:** the Nerd Font isn't installed or the font cache is stale. Redo step 2, then log out and back in.
+- **Icons show as boxes:** the Nerd Font isn't installed or the font cache is stale. Run `./install.sh` again and say yes to the font, then log out and back in.
 - **Music section missing from the island:** it only appears while a media player is open. Play something.
 - **Island visualiser bars stay flat:** check that `cava` runs on its own in a terminal.
 - **Two bars on login:** another autostart entry is also starting Waybar. Check `~/.config/autostart/`.
