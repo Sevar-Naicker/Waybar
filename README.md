@@ -46,6 +46,14 @@ Floating pills · a dynamic island · launcher, music, calendar, wallpaper and f
     <td align="center"><img src="screenshots/power-menu.png" alt="Power menu with lock, sleep, log out, restart and shut down" width="420"></td>
   </tr>
   <tr>
+    <th align="center">Control centre</th>
+    <th align="center">Clipboard</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/control-centre.png" alt="Control centre with CPU, memory, GPU and temperature dials, volume and mic sliders, and Wi-Fi, Bluetooth, night light and keep awake tiles" width="330"></td>
+    <td align="center"><img src="screenshots/clipboard.png" alt="Clipboard history with its search box, before anything has been copied" width="420"></td>
+  </tr>
+  <tr>
     <th align="center" colspan="2">Calendar and weather</th>
   </tr>
   <tr>
@@ -66,7 +74,7 @@ Floating pills · a dynamic island · launcher, music, calendar, wallpaper and f
     <td align="center" colspan="2"><img src="screenshots/wallpaper-picker.png" alt="Wallpaper picker with slanted cards and colour filters" width="840"></td>
   </tr>
   <tr>
-    <td align="center" colspan="2"><img src="screenshots/wallpaper-wipe.gif" alt="Picking a wallpaper sweeps it in from the right while the bar and island change colour" width="720"><br><sub>Picking a wallpaper sweeps it in, and the bar, island and menus take its colours</sub></td>
+    <td align="center" colspan="2"><img src="screenshots/wallpaper-wipe.gif" alt="Scrolling through the wallpaper picker, then picking one: it sweeps in from the right while the bar and island change colour" width="720"><br><sub>Picking a wallpaper sweeps it in, and the bar, island and menus take its colours</sub></td>
   </tr>
 </table>
 
