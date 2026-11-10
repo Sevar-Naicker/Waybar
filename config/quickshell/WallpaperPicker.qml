@@ -52,6 +52,9 @@ MenuWindow
 
     property string currentPath: strip.currentIndex >= 0 && strip.currentIndex < filtered.length ? filtered[strip.currentIndex] : ""
 
+    // The card whose right-click menu is open ("" when none is)
+    property string menuPath: ""
+
     // The colour families, in rainbow order, with the colour of each dot
     readonly property var familyDots: [
         { "name": "red", "colour": "#E5484D" },
@@ -128,6 +131,20 @@ MenuWindow
         }
     }
 
+    // The useForLogin function closes the picker and puts the wallpaper on the login screen (a password box asks first)
+    function useForLogin(Path)
+    {
+        menuPath = "";
+
+        if (Path === "")
+        {
+            return;
+        }
+
+        closeMenu();
+        Quickshell.execDetached(["bash", Quickshell.env("HOME") + "/.config/shrine-waybar/run.sh", "set-login-wallpaper", Path]);
+    }
+
     // The jumpToCurrent function puts the wallpaper in use in the middle straight away
     function jumpToCurrent()
     {
@@ -146,6 +163,7 @@ MenuWindow
             if (picker.shown)
             {
                 picker.filter = "all";
+                picker.menuPath = "";
                 picker.applying = false;
                 picker.flyOut = 0;
                 wipe.opacity = 0;
@@ -419,15 +437,31 @@ MenuWindow
     }
 
     // Section: Keys
-    // Left and right move along, Enter uses the wallpaper in the middle
+    // Left and right move along, Enter uses the wallpaper in the middle, L puts it on the login screen
     Item
     {
         focus: true
 
-        Keys.onLeftPressed: strip.decrementCurrentIndex()
-        Keys.onRightPressed: strip.incrementCurrentIndex()
+        Keys.onLeftPressed:
+        {
+            picker.menuPath = "";
+            strip.decrementCurrentIndex();
+        }
+        Keys.onRightPressed:
+        {
+            picker.menuPath = "";
+            strip.incrementCurrentIndex();
+        }
         Keys.onReturnPressed: picker.useWallpaper(picker.currentPath)
         Keys.onEnterPressed: picker.useWallpaper(picker.currentPath)
+        Keys.onPressed: (Event) =>
+        {
+            if (Event.key === Qt.Key_L)
+            {
+                picker.useForLogin(picker.currentPath);
+                Event.accepted = true;
+            }
+        }
     }
 
     // Section: Layout
@@ -630,6 +664,8 @@ MenuWindow
                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                 onWheel: (Wheel) =>
                 {
+                    picker.menuPath = "";
+
                     if (Wheel.angleDelta.y > 0 || Wheel.angleDelta.x > 0)
                     {
                         strip.decrementCurrentIndex();
@@ -655,6 +691,9 @@ MenuWindow
 
                 // How far it slides left when a wallpaper is picked (cards further right travel further, so they bunch up as they go)
                 property real flyDistance: picker.width * 0.75 + (index - strip.currentIndex) * 120
+
+                // The card with its menu open sits above its neighbours, so the menu isn't covered
+                z: picker.menuPath === modelData ? 10 : 0
 
                 width: isCurrent ? picker.wideWidth : picker.narrowWidth
                 height: picker.stripHeight
@@ -735,12 +774,29 @@ MenuWindow
                     }
                 }
 
+                // Click picks or uses a card; right-click opens its menu
                 MouseArea
                 {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    onClicked:
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onClicked: (Mouse) =>
                     {
+                        if (Mouse.button === Qt.RightButton)
+                        {
+                            strip.currentIndex = card.index;
+                            cardMenu.x = Math.min(Mouse.x, card.width - cardMenu.width - 8);
+                            cardMenu.y = Math.min(Mouse.y, card.height - cardMenu.height - 8);
+                            picker.menuPath = card.modelData;
+                            return;
+                        }
+
+                        if (picker.menuPath !== "")
+                        {
+                            picker.menuPath = "";
+                            return;
+                        }
+
                         if (card.isCurrent)
                         {
                             picker.useWallpaper(card.modelData);
@@ -748,6 +804,108 @@ MenuWindow
                         else
                         {
                             strip.currentIndex = card.index;
+                        }
+                    }
+                }
+
+                // Section: Right-click menu
+                // Use it (desktop and lock screen), or put it on the login screen too
+                Rectangle
+                {
+                    id: cardMenu
+
+                    visible: picker.menuPath === card.modelData
+                    width: 220
+                    height: menuColumn.implicitHeight + 12
+                    radius: 12
+                    color: Theme.panel
+                    border.width: 1
+                    border.color: Theme.edge
+
+                    Column
+                    {
+                        id: menuColumn
+
+                        anchors.fill: parent
+                        anchors.margins: 6
+
+                        Repeater
+                        {
+                            model: [
+                                { "name": "use", "icon": "\uf03e", "label": "Use as wallpaper" },
+                                { "name": "login", "icon": "\uf023", "label": "Set as login screen" }
+                            ]
+
+                            Rectangle
+                            {
+                                id: menuItem
+
+                                required property var modelData
+
+                                width: menuColumn.width
+                                height: 34
+                                radius: 8
+                                color: itemHover.containsMouse ? Theme.cardHover : "transparent"
+
+                                Text
+                                {
+                                    id: itemIcon
+
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 12
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 16
+                                    text: menuItem.modelData.icon
+                                    color: Theme.pastel
+                                    font.family: Theme.font
+                                    font.pixelSize: 12
+                                }
+
+                                Text
+                                {
+                                    anchors.left: itemIcon.right
+                                    anchors.leftMargin: 10
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: menuItem.modelData.label
+                                    color: Theme.text
+                                    font.family: Theme.font
+                                    font.pixelSize: 12
+                                }
+
+                                // The login screen one needs your password, so it says so
+                                Text
+                                {
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 10
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: menuItem.modelData.name === "login"
+                                    text: "\uf084"
+                                    color: Theme.muted
+                                    font.family: Theme.font
+                                    font.pixelSize: 10
+                                }
+
+                                MouseArea
+                                {
+                                    id: itemHover
+
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked:
+                                    {
+                                        if (menuItem.modelData.name === "login")
+                                        {
+                                            picker.useForLogin(card.modelData);
+                                        }
+                                        else
+                                        {
+                                            picker.menuPath = "";
+                                            picker.useWallpaper(card.modelData);
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -859,7 +1017,7 @@ MenuWindow
                 Text
                 {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "ENTER OR CLICK TO USE · ESC TO CLOSE"
+                    text: "ENTER OR CLICK TO USE · RIGHT-CLICK OR L FOR LOGIN SCREEN · ESC TO CLOSE"
                     color: Theme.muted
                     opacity: 0.7
                     font.family: Theme.font

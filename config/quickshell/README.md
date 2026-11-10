@@ -46,7 +46,7 @@ Music only appears while a media player is open, Sync only while the Nextcloud c
 | `MusicMenu.qml` | Spinning album-art disc, track, seek bar, controls, and the 10-band equaliser with eight presets (through Easy Effects, output presets only) |
 | `FocusMenu.qml` | The focus timer: countdown ring, start/pause, skip and reset, the focus, break and long break lengths, the silence switch and today's total |
 | `focus-quiet.py` | Holds notifications back while a focus round runs, through the notification server's Inhibit call; KDE lets them through again when it stops |
-| `WallpaperPicker.qml` | The slanted wallpaper strip (the chosen card always in the middle) with colour filters; picking one sweeps it in from the right, sets it on every screen and the lock screen, and saves its colours |
+| `WallpaperPicker.qml` | The slanted wallpaper strip (the chosen card always in the middle) with colour filters; picking one sweeps it in from the right, sets it on every screen and the lock screen, and saves its colours. Right-click a card, or press L, to also put it on the login screen through `shrine-waybar/login-wallpaper.sh`, which asks for your password |
 | `WallpaperColours.qml` | Reads each wallpaper's pixels on a tiny hidden canvas, so the theme comes from the colours that really cover the picture |
 | `ControlCentre.qml` | CPU, memory, GPU and temperature dials, volume and mic sliders, Wi-Fi, Bluetooth, night light and keep awake tiles |
 | `weather.py` | Fetches the weather from wttr.in every 30 minutes for the calendar menu (set `SHRINE_WEATHER_LOCATION` in shrine.conf, or leave it empty to use your connection's location) |

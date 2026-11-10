@@ -3,7 +3,7 @@
 # It reads settings.sh, so the same buttons open the right app or command on any system
 #   run.sh store | browser | music | music-pill | keepawake-pill | update | system-monitor | in-terminal <command...>
 #   run.sh open-folder <path> | show-file <path> | save-image <path> | downloads-folder | nextcloud-folder
-#   run.sh ensure-colours | apply-theme <json> <css> | set-wallpaper <path> | wallpaper-dir | wallpaper-list
+#   run.sh ensure-colours | apply-theme <json> <css> | set-wallpaper <path> | set-login-wallpaper <path> | wallpaper-dir | wallpaper-list
 #   run.sh eq-status | eq-apply <preset> <10 gains> | eq-install
 
 # Section: Settings
@@ -254,6 +254,38 @@ Set_Wallpaper()
         "for (const Desk of desktops()) { Desk.wallpaperPlugin = 'org.kde.image'; Desk.currentConfigGroup = ['Wallpaper', 'org.kde.image', 'General']; Desk.writeConfig('Image', 'file://$Image'); }" >/dev/null 2>&1
 }
 
+# The Set_Login_Wallpaper function puts a picture on the login screen; that's a system setting, so it asks for your password
+Set_Login_Wallpaper()
+{
+    local Name
+
+    Name=$(basename "$1")
+    Name=${Name%.*}
+
+    if ! Has pkexec
+    then
+        notify-send -a Wallpapers -i preferences-desktop-wallpaper "Login screen not changed" "pkexec isn't installed, so it can't ask for your password." 2>/dev/null
+        return 1
+    fi
+
+    pkexec /usr/bin/env bash "$ShrineHere/login-wallpaper.sh" "$1"
+
+    case $? in
+        0)
+            notify-send -a Wallpapers -i preferences-desktop-wallpaper "Login screen set" "$Name shows when you next log in." 2>/dev/null
+            ;;
+        3)
+            notify-send -a Wallpapers -i preferences-desktop-wallpaper "Login screen not changed" "This only works with Plasma Login Manager. Set it in System Settings → Login Screen instead." 2>/dev/null
+            ;;
+        126|127)
+            # The password box was closed or the password was wrong; nothing changed
+            ;;
+        *)
+            notify-send -a Wallpapers -i preferences-desktop-wallpaper "Login screen not changed" "Something went wrong setting $Name." 2>/dev/null
+            ;;
+    esac
+}
+
 # The Set_Lock_Wallpaper function puts the same picture on KDE's lock screen (it reads this the next time the screen locks)
 Set_Lock_Wallpaper()
 {
@@ -433,6 +465,7 @@ case "${1:-}" in
     ensure-colours) Ensure_Colours ;;
     apply-theme) Ensure_Colours; Apply_Theme "$2" "$3" ;;
     set-wallpaper) Set_Wallpaper "$2" ;;
+    set-login-wallpaper) Set_Login_Wallpaper "$2" ;;
     wallpaper-list) Wallpaper_List ;;
     wallpaper-dir) mkdir -p "$SHRINE_WALLPAPER_DIR" 2>/dev/null; printf '%s\n' "$SHRINE_WALLPAPER_DIR" ;;
     eq-status) Eq_Status ;;

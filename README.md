@@ -118,7 +118,7 @@ Floating pills · a dynamic island · launcher, music, calendar, wallpaper and f
 | ☕ | **Keep awake** | Click to stop the screen sleeping or locking. Turns maple red while on. Also in the control centre |
 | 📅 | **Calendar** | Click the island's clock. Month on the left, a big clock with the forecast revolving round it (it turns by itself; scroll or click a pill to turn it yourself), and the weather with wind, humidity, rain and feels-like dials for the slot at the front |
 | 📋 | **Clipboard** | Everything you've copied, text and images, newest first (the island keeps the last 100). Search it, click or press Enter to copy an entry again, pin the ones you keep needing (Ctrl+P), and clear the rest with two clicks. Copies a password manager marks as secret are never kept |
-| 🖼 | **Wallpaper picker** | A strip of slanted cards from `~/Pictures/Wallpapers`, the chosen one always in the middle, with colour dots to filter by. Picking one sweeps it in from the right, sets it on every screen and the lock screen, and fades the menus, island and bar to the colours that really cover it. The ↺ button goes back to the Shrine colours |
+| 🖼 | **Wallpaper picker** | A strip of slanted cards from `~/Pictures/Wallpapers`, the chosen one always in the middle, with colour dots to filter by. Picking one sweeps it in from the right, sets it on every screen and the lock screen, and fades the menus, island and bar to the colours that really cover it. Right-click a card (or press L) to put it on the login screen too, which asks for your password (Plasma Login Manager only). The ↺ button goes back to the Shrine colours |
 | 🎚 | **Music menu** | Click the island's music. The album art spins like a record while it plays, with the track, a seek bar and controls, and a 10-band equaliser: drag the sliders or pick Flat, Bass, Treble, Vocal, Pop, Rock, Jazz or Classic. It goes through Easy Effects and only touches output presets named "Shrine …", so a mic preset you use for calls is left alone |
 | ⏳ | **Focus timer** | Pomodoro rounds: 25 minutes of focus, a 5 minute break, and a 15 minute break after every fourth round (change any of them). A ring counts down, the island shows the countdown in place of the time, and notifications are held back while you focus. Space starts or pauses, S skips, R resets. Keeps today's total |
 | 🎛 | **Control centre** | CPU, memory, GPU and temperature dials, volume and microphone sliders, and Wi-Fi, Bluetooth, night light and keep awake tiles. Right-click Wi-Fi or Bluetooth for KDE's settings |
@@ -401,6 +401,7 @@ shrine-waybar/
 │   ├── shrine-waybar/
 │   │   ├── settings.sh         # Works out your system and default apps, reads shrine.conf
 │   │   ├── run.sh              # What every button runs (opens the right app on any system)
+│   │   ├── login-wallpaper.sh  # Puts a picked wallpaper on the login screen (runs as admin, after your password)
 │   │   └── shrine.conf         # Your own choices (made by the installer, not in git)
 │   ├── waybar/
 │   │   ├── config.jsonc        # Bar layout and modules
